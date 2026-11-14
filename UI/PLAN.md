@@ -48,3 +48,9 @@ These are approved visual concepts generated with the built-in Image Gen tool, n
 ## Relationship to the Project Plan
 
 This plan records the explicitly selected chat UI and mock API phase. The broader AutoSage specification in `../PROJECT_PLAN.md` describes a future real-agent diagnostic workflow; it is not implemented or superseded by these mockups. No application code is included in this design handoff.
+
+## Implementation Status
+
+The mock UI phase is now implemented in `../frontend` and `../backend`. See [local setup and limitations](../README.md). The production frontend build, seven backend tests, and three Chromium end-to-end scenarios pass, including synthetic-device audio/video recording and playback. Real physical-device and cross-browser testing remain manual checks.
+
+The implementation uses the desktop palette consistently on mobile. Initial demo chats contain text only; real attachments render after upload. A fifth attachment menu action, Upload audio, makes file upload available when microphone permission is denied. Recording previews show the actual camera stream rather than the illustrative wheel photo in the mockup.
