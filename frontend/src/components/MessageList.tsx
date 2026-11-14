@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Car } from 'lucide-react';
 import Markdown from 'react-markdown';
 import InvestigationDetails from './InvestigationDetails';
-import {customerError, type Message, type MechanicReport} from '../api';
+import {customerError, type ChatMode, type Message, type MechanicReport} from '../api';
+
+export const BMW_PROMPTS = [
+  'My yellow TPMS warning is showing on iDrive.',
+  'Coolant loss is recurring in slow traffic.',
+  'Clicking without cranking on start — could a BMW 330i starter recall apply?',
+  'My engine idles roughly with a check-engine warning.',
+];
 
 function annotated(message: Message) {
   const characters = Array.from(message.text);
@@ -19,7 +26,8 @@ function Report({report}: {report: MechanicReport}) {
   return <details className="report"><summary>Mechanic handoff</summary><p>Reported symptoms</p><ul>{report.reported_symptoms.map((s, i) => <li key={i}>{s}</li>)}</ul>{!!report.media_observations?.length&&<><p>Media observations (unconfirmed)</p><ul>{report.media_observations.map(e=><li key={e.id}>{e.quote}{e.value===null?" (uncertain)":""}</li>)}</ul></>}<small>{report.uncertainties.join(' ')}</small>{report.unresolved_questions?.map(question => <p key={question.id}>Unresolved: {question.text}</p>)}<button className="outline" onClick={async () => { try { await navigator.clipboard.writeText(text); setFeedback('Report copied'); } catch { setFeedback('Copy unavailable. Select the report text to copy.'); } }}>Copy report</button><span role="status">{feedback}</span></details>;
 }
 
-export default function MessageList({messages, onRetry, busy}: {messages: Message[]; onRetry: (id: string) => void; busy: boolean}) {
+export default function MessageList({messages, onRetry, busy, mode = 'general', onQuickPrompt}: {messages: Message[]; onRetry: (id: string) => void; busy: boolean; mode?: ChatMode; onQuickPrompt?: (prompt: string) => void}) {
+  const isBmw = mode === 'bmw_g20';
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const list = end.current?.parentElement;
@@ -28,7 +36,7 @@ export default function MessageList({messages, onRetry, busy}: {messages: Messag
     else end.current?.scrollIntoView({block:'end'});
   }, [messages.length, messages.at(-1)?.state]);
   return <div className="messages" role="log" aria-label="Conversation" aria-live="polite">
-    {!messages.length && <div className="empty"><Car size={40}/><h2>What’s happening with your car?</h2><p>Describe it, record it, or add a photo.</p><small>Share what you noticed. We will narrow it down together.</small></div>}
+    {!messages.length && <div className="empty"><Car size={40}/><h2>{isBmw ? 'What’s happening with your BMW 330i (G20)?' : 'What’s happening with your car?'}</h2><p>{isBmw ? 'Describe a Check Control message, iDrive warning, noise, or symptom — or add a photo, voice note, or clip.' : 'Describe it, record it, or add a photo.'}</p><small>{isBmw ? '2019–2024 BMW 330i petrol (B46TU/B48TU) · Uses shared vehicle sensor readings when enabled.' : 'Share what you noticed. We will narrow it down together.'}</small>{isBmw && onQuickPrompt && <div className="quick-prompts" aria-label="BMW 330i G20 starter examples">{BMW_PROMPTS.map(prompt => <button key={prompt} type="button" className="outline quick-prompt" disabled={busy} onClick={() => onQuickPrompt(prompt)}>{prompt}</button>)}</div>}</div>}
     {messages.map((message, index) => <article key={message.id} className={`message ${message.role}`}>
       {message.role === 'assistant' && <span className="avatar"><Car/></span>}<div className="message-content"><div className="bubble">
         {message.text && (message.role === 'user' ? <p>{message.text}</p> : <div className="answer-markdown"><Markdown skipHtml components={{a: ({href, children}) => message.citations.some(c => c.url === href) ? <a href={href} target="_blank" rel="noreferrer">{children}</a> : <span>{children}</span>, img: () => null}}>{annotated(message)}</Markdown></div>)}
@@ -36,6 +44,7 @@ export default function MessageList({messages, onRetry, busy}: {messages: Messag
         {message.state === 'failed' && <div className="generation-error"><p role="alert">{customerError(message.error || 'Investigation failed.')}</p>{index === messages.length - 1 && <button className="outline" disabled={busy} onClick={() => onRetry(message.id)}>Retry investigation</button>}</div>}
         {message.attachments.map(file => <div className="sent-media" key={file.id}>{file.kind === 'image' ? <a href={file.url} target="_blank" rel="noreferrer"><img src={file.url} alt={file.filename}/></a> : file.kind === 'audio' ? <audio src={file.url} controls/> : <video src={file.url} controls playsInline/>}<small>{file.filename}</small></div>)}
         {message.role === 'assistant' && message.state === 'processing' && <small>Analyzing the problem…</small>}
+        {message.role === 'assistant' && message.provider === 'gemma' && <small className="model-attribution">Gemma 4 26B · Web access blocked</small>}
         {message.role === 'assistant' && message.provider === 'safety_rules' && message.state !== 'processing' && <small>Professional assistance recommended</small>}
       </div>
       {message.role === 'assistant' && <InvestigationDetails message={message}/>}

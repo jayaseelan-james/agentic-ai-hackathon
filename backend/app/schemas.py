@@ -56,6 +56,7 @@ class Message(BaseModel):
     reply_to: str | None = None
     role: Literal['user', 'assistant']
     text: str = ''
+    sensor_check: bool = False
     timestamp: str = Field(default_factory=now)
     attachments: list[Attachment] = Field(default_factory=list)
     state: Literal['processing', 'complete', 'failed'] = 'complete'
@@ -74,6 +75,7 @@ class Message(BaseModel):
 
 class Incident(BaseModel):
     id: str = Field(default_factory=uid)
+    mode: Literal['general', 'bmw_g20'] = 'general'
     title: str = 'New chat'
     vehicle: Vehicle = Field(default_factory=Vehicle)
     messages: list[Message] = Field(default_factory=list)
@@ -84,4 +86,5 @@ class Incident(BaseModel):
 
 
 class CreateIncident(BaseModel):
+    mode: Literal['general', 'bmw_g20'] = 'general'
     vehicle: Vehicle = Field(default_factory=Vehicle)

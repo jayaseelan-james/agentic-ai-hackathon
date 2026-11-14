@@ -2,17 +2,18 @@
 import asyncio
 import hashlib
 from contextlib import asynccontextmanager
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from .agent import investigate
-from .config import settings
-from .provider import GeminiProvider, public_error
+from .bmw import BMW_MAKE, BMW_MODEL
+from .config import RESTRICTED_MODEL, settings
+from .provider import GeminiProvider, GemmaProvider, public_error
 from .safety import SAFETY, critical
 from .schemas import Attachment, CreateIncident, Event, Incident, Message, Vehicle, uid
-from .sensors import Simulation, EnableSimulation, SensorChange, change_sensor, describe, reset, touch
+from .sensors import Simulation, EnableSimulation, ConnectivitySimulation, SensorChange, change_sensor, describe, reset, touch
 from .tools import mechanic_report
 from . import simulator
 from .diagnostics import finish, ingest_user, set_context
@@ -53,6 +54,10 @@ def get_provider():
     return GeminiProvider()
 
 
+def get_restricted_provider():
+    return GemmaProvider()
+
+
 def get_incident(incident_id: str):
     if incident_id not in incidents:
         raise HTTPException(404, 'Chat not found. Start a new chat after a server restart.')
@@ -67,7 +72,8 @@ async def run(incident, user, answer):
     global verified_model
     provider = None
     try:
-        provider = get_provider()
+        provider = get_restricted_provider() if incident.sensor_simulation.internet_blocked else get_provider()
+        answer.provider = getattr(provider, 'name', 'gemini')
         answer.model = provider.model
         await investigate(incident, user, answer, media, provider)
         if isinstance(provider, GeminiProvider):
@@ -109,12 +115,22 @@ def complete_or_enqueue(incident, user, answer):
     if answer.simulator_snapshot is None:
         incident.sensor_simulation = shared_simulation.model_copy(deep=True)
         sim = incident.sensor_simulation
-        answer.simulator_snapshot = {'enabled': sim.enabled, 'revision': sim.revision, 'fixture_id': sim.fixture_id, 'snapshot_time': sim.snapshot_time}
+        answer.simulator_snapshot = {'enabled': sim.enabled, 'revision': sim.revision, 'fixture_id': sim.fixture_id, 'snapshot_time': sim.snapshot_time, 'internet_blocked': sim.internet_blocked}
+    restricted = incident.sensor_simulation.internet_blocked
+    answer.provider = 'gemma' if restricted else 'gemini'
+    answer.model = RESTRICTED_MODEL if restricted else settings()[1]
     if incident.sensor_simulation.enabled:
         set_context(incident, 'demo')
     elif incident.diagnostic_state.context == 'demo':
         set_context(incident, 'real')
     ingest_user(incident, user)
+    if user.sensor_check and not incident.sensor_simulation.enabled and not incident.safety:
+        answer.state = 'complete'
+        answer.text = 'Sensor readings are not enabled, so I could not check your car. Enable vehicle readings and try again, or describe the warning or symptom in chat.'
+        answer.provider = 'sensor_status'
+        answer.model = None
+        answer.activity.append(Event(tool='list_available_sensors', initiator='backend', summary='Sensor readings are disabled', result={'status': 'disabled'}))
+        return
     if incident.safety:
         answer.state = 'complete'
         answer.text = SAFETY
@@ -129,7 +145,9 @@ def complete_or_enqueue(incident, user, answer):
 @app.get('/api/health')
 def health():
     key, model = settings()
-    return {'status': 'ok', 'mode': 'live', 'provider': 'gemini', 'model': model, 'configured': bool(key), 'verified': verified_model == model, 'supported_inputs': ['text', 'image', 'audio', 'video'], 'sensor_connection': False}
+    blocked = shared_simulation.internet_blocked
+    model = RESTRICTED_MODEL if blocked else model
+    return {'status': 'ok', 'mode': 'restricted' if blocked else 'live', 'provider': 'gemma' if blocked else 'gemini', 'model': model, 'configured': bool(key), 'verified': verified_model == model, 'supported_inputs': ['text', 'image', 'audio', 'video'], 'sensor_connection': False, 'internet_blocked': blocked, 'web_search_allowed': not blocked, 'api_connection_allowed': True}
 
 
 @app.get('/api/vehicles')
@@ -138,13 +156,17 @@ def vehicles():
 
 
 @app.get('/api/incidents', response_model=list[Incident])
-def list_incidents():
-    return list(reversed(incidents.values()))
+def list_incidents(mode: Literal['general', 'bmw_g20'] | None = None):
+    items = list(reversed(incidents.values()))
+    return [item for item in items if item.mode == mode] if mode else items
 
 
 @app.post('/api/incidents', response_model=Incident, status_code=201)
 def create_incident(body: CreateIncident):
-    incident = Incident(vehicle=body.vehicle)
+    vehicle = body.vehicle
+    if body.mode == 'bmw_g20' and not vehicle.make and not vehicle.model:
+        vehicle = Vehicle(make=BMW_MAKE, model=BMW_MODEL, year=vehicle.year)
+    incident = Incident(mode=body.mode, vehicle=vehicle)
     incidents[incident.id] = incident
     locks[incident.id] = asyncio.Lock()
     return incident
@@ -193,11 +215,12 @@ async def update_sensor(incident_id: str, sensor_name: str, body: SensorChange):
 
 
 @app.post('/api/incidents/{incident_id}/messages', response_model=Incident, status_code=202)
-async def send_message(incident_id: str, request_id: Annotated[str, Form(min_length=1, max_length=80)], text: str = Form(''), files: list[UploadFile] = File(default=[])):
+async def send_message(incident_id: str, request_id: Annotated[str, Form(min_length=1, max_length=80)], text: str = Form(''), files: list[UploadFile] = File(default=[]), sensor_check: bool = Form(False)):
     incident = get_incident(incident_id)
     pending = []
     total = 0
     fingerprint = hashlib.sha256(text.encode())
+    fingerprint.update(b'\x01' if sensor_check else b'\x00')
     try:
         if len(files) > 5 or len(text) > 10000 or (not text.strip() and not files):
             raise HTTPException(422, 'Provide text (up to 10,000 characters) or 1–5 attachments.')
@@ -228,7 +251,7 @@ async def send_message(incident_id: str, request_id: Annotated[str, Form(min_len
             return incident
         if processing(incident):
             raise HTTPException(409, 'An investigation is already processing. Please wait.')
-        user = Message(role='user', text=text.strip(), request_id=request_id, attachments=[a for a, _ in pending])
+        user = Message(role='user', text=text.strip(), sensor_check=sensor_check, request_id=request_id, attachments=[a for a, _ in pending])
         if critical(user.text):
             incident.safety = SAFETY
         answer = Message(role='assistant', state='processing', reply_to=user.id, provider='gemini', model=settings()[1], activity=[Event(tool='evaluate_safety', initiator='backend', summary='Critical symptoms detected' if incident.safety else 'Reported-symptom preflight completed; safety not determined')])
@@ -309,6 +332,16 @@ async def shared_scenario(body: simulator.Scenario, if_match: str | None = Heade
 @app.patch('/api/simulator')
 async def shared_enable(body: EnableSimulation, if_match: str | None = Header(default=None)):
     return await _enable(body, if_match)
+
+
+@app.patch('/api/simulator/connectivity')
+async def shared_connectivity(body: ConnectivitySimulation, if_match: str | None = Header(default=None)):
+    async with simulator_lock:
+        simulator.check_revision(if_match)
+        if shared_simulation.internet_blocked != body.internet_blocked:
+            shared_simulation.internet_blocked = body.internet_blocked
+            touch(shared_simulation)
+        return simulator.describe_state()
 
 @app.patch('/api/simulator/sensors/{name}')
 async def shared_update(name: str, body: SensorChange, if_match: str | None = Header(default=None)):

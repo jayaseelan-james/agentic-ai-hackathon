@@ -3,9 +3,10 @@ import {ExternalLink} from 'lucide-react';
 import type {DiagnosticInference, Message} from '../api';
 
 const DOMAINS:Record<string,string>={tire:'Tires',brake:'Brakes',cooling:'Cooling',starting_charging:'Starting and charging',engine_running:'Engine running'};
-const TOOLS:Record<string,string>={gemini:'Analyzing the problem',google_search:'Searching the web',url_context:'Reading a reference page',process_media:'Analyzing media',record_observations:'Recording observations',get_vehicle_profile:'Checking vehicle details',update_vehicle_profile:'Saving vehicle details',classify_diagnosis:'Updating Bayesian probabilities',read_vehicle_sensors:'Reading vehicle sensors',read_sensor_history:'Checking sensor history',list_available_sensors:'Discovering sensor channels',evaluate_safety:'Checking safety',create_mechanic_report:'Preparing mechanic handoff',tool_validation:'Validating a tool call',delete_provider_file:'Removing temporary media'};
+const TOOLS:Record<string,string>={gemini:'Analyzing the problem',google_search:'Searching the web',url_context:'Reading a reference page',process_media:'Analyzing media',record_observations:'Recording observations',get_vehicle_profile:'Checking vehicle details',update_vehicle_profile:'Saving vehicle details',classify_diagnosis:'Updating Bayesian probabilities',read_vehicle_sensors:'Reading vehicle sensors',read_sensor_history:'Checking sensor history',list_available_sensors:'Discovering sensor channels',search_bmw_knowledge:'Checking BMW 330i G20 knowledge base',check_bmw_recalls:'Checking BMW G20 recall campaigns',evaluate_safety:'Checking safety',create_mechanic_report:'Preparing mechanic handoff',tool_validation:'Validating a tool call',delete_provider_file:'Removing temporary media'};
 const label=(s:string)=>s.replaceAll('_',' ');
 const status=(s:string)=>s==='running'?'In progress':s==='failed'?'Failed':'Complete';
+TOOLS.gemma='Analyzing with Gemma 4 26B';
 
 export default function InvestigationDetails({message}:{message:Message}) {
  const dropdown=useRef<HTMLDetailsElement>(null);

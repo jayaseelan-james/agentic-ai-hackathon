@@ -2,10 +2,12 @@ import asyncio
 import json
 from urllib.parse import urlparse
 
+from .bmw import BMW_ADDENDUM
+from .config import RESTRICTED_MODEL
 from .media_processing import normalize
 from .schemas import Citation, Event, Incident, Message
 from .safety import SAFETY, critical, unsafe_answer
-from .tools import TOOLS, dispatch
+from .tools import dispatch, tools_for
 from .sensors import metadata
 from .diagnostics import classify, finish, ingest_user, next_question, snapshot
 
@@ -72,8 +74,18 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
     ingest_user(incident, user)
     uploaded = []
     observations_recorded = False
+    tool_citations: list[Citation] = []
     sensor_tools = {'list_available_sensors', 'read_vehicle_sensors', 'read_sensor_history'}
-    tools = [t for t in TOOLS if incident.sensor_simulation.enabled or t.get('name') not in sensor_tools]
+    restricted = incident.sensor_simulation.internet_blocked
+    model_label = 'Gemma 4 26B' if restricted else 'Gemini'
+    if restricted and provider.model != RESTRICTED_MODEL:
+        raise ValueError('Gemma returned a different model. Remote breakdown mode requires Gemma 4 26B strictly.')
+    tools = [t for t in tools_for(incident) if incident.sensor_simulation.enabled or t.get('name') not in sensor_tools]
+    system_prompt = (SYSTEM + '\n' + BMW_ADDENDUM) if incident.mode == 'bmw_g20' else SYSTEM
+    if restricted:
+        system_prompt = system_prompt.replace('Use Google Search to verify technical guidance and manufacturer instructions, preferring official manufacturers and established automotive sources. Use URL context for relevant public references. Do not search unnecessarily for greetings or clarification questions.',
+                                              'Web search and external URL retrieval are blocked. Use only this conversation, sensor tools, local Bayesian inference and bundled BMW knowledge. Never claim to have checked a website or verified a live recall. Bundled source URLs identify saved references and are not live verification.')
+        system_prompt += '\nRemote breakdown simulation: use Gemma 4 26B strictly through the Gemini API. The model API connection is allowed; web_search, Google Search, URL context and external website access are forbidden. There is no fallback to a Gemini model. Explain any information unavailable without web access. Do not tell the user the AI is running locally or fully offline.'
     try:
         async with asyncio.timeout(180):
             history = []
@@ -86,7 +98,7 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
                 for attachment in message.attachments:
                     analysis = {'attachment_id': attachment.id, 'kind': attachment.kind, 'status': 'processing'}
                     answer.media_analysis.append(analysis)
-                    event = Event(tool='process_media', initiator='backend', status='running', summary=f'Preparing {attachment.kind} for Gemini')
+                    event = Event(tool='process_media', initiator='backend', status='running', summary=f'Preparing {attachment.kind} for {model_label}')
                     answer.activity.append(event)
                     data, mime = await normalize(media[attachment.id][0], attachment.mime_type, attachment.kind)
                     file = await provider.upload(data, mime)
@@ -102,9 +114,23 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
                     incident.analyzed_attachment_ids.add(attachment.id)
                     analysis['status'] = 'submitted'
                     event.status = 'complete'
-                    event.summary = f'{attachment.kind.capitalize()} decoded and uploaded for actual Gemini analysis'
+                    event.summary = f'{attachment.kind.capitalize()} decoded and uploaded for actual {model_label} analysis'
                 history.append({'type': 'user_input' if message.role == 'user' else 'model_output', 'content': content})
-            model_event = Event(tool='gemini', initiator='backend', status='running', summary='Investigating with Gemini')
+            if user.sensor_check:
+                sensor_evidence = []
+                names = list(incident.sensor_simulation.channels)
+                for name, arguments in (
+                    ('list_available_sensors', {}),
+                    ('read_vehicle_sensors', {'sensor_names': names}),
+                    ('read_sensor_history', {'sensor_names': names, 'max_points': 8}),
+                ):
+                    output = dispatch(name, arguments, incident)
+                    answer.activity.append(Event(tool=name, initiator='backend', arguments=arguments, result=output,
+                                                 summary='Automatic sensor check: ' + name.replace('_', ' ')))
+                    sensor_evidence.append({'tool': name, 'result': output})
+                history.append({'type': 'user_input', 'content': [{'type': 'text', 'text': 'Automatic sensor check results from the frozen readings for this request:\n' + json.dumps(sensor_evidence)}]})
+                system_prompt += '\nThis is an automatic sensor review requested by the user. The backend has already read all current channels and a sampled history; use the supplied results now. First summarize noteworthy readings and trends across tires, brakes, cooling, starting/charging and engine running, then give a safe next action. State missing readings and operating-condition uncertainty. Zero RPM, fuel pressure, airflow or fan speed with an engine off do not establish a fault. Do not ask for vehicle details before presenting the available findings. If nothing clearly abnormal is supported, say that these readings cannot establish a fault or roadworthiness. Ask at most one necessary follow-up after the summary.'
+            model_event = Event(tool='gemma' if restricted else 'gemini', initiator='backend', status='running', summary=f'Investigating with {model_label}' + (' · web access blocked' if restricted else ''))
             answer.activity.append(model_event)
             previous = None
             calls = 0
@@ -115,12 +141,14 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
                 inference = [classify(incident, domain) for domain in incident.diagnostic_state.domains]
                 question = next_question(incident, inference)
                 diagnostic_context = {'results': [r.model_dump() for r in inference], 'next_question': question.model_dump() if question else None}
-                params = {'input': inputs, 'system_instruction': SYSTEM + '\nConfirmed vehicle context: ' + json.dumps(incident.vehicle.model_dump()) + '\nCurrent sensor context (values require tool calls): ' + json.dumps(context) + '\nAuthoritative backend diagnostic state: ' + json.dumps(diagnostic_context) + '\nFor all five modeled domains, distinguish computed categories from unmodeled root causes. Preserve useful text/media/web evidence in your explanation. Prefer the provided next question over a competing question. Never invent a diagnostic percentage.', 'tools': tools, 'generation_config': {'max_output_tokens': 6000, 'thinking_level': 'low'}}
+                params = {'input': inputs, 'system_instruction': system_prompt + '\nConfirmed vehicle context: ' + json.dumps(incident.vehicle.model_dump()) + '\nCurrent sensor context (values require tool calls): ' + json.dumps(context) + '\nAuthoritative backend diagnostic state: ' + json.dumps(diagnostic_context) + '\nFor all five modeled domains, distinguish computed categories from unmodeled root causes. Preserve useful text/media/web evidence in your explanation. Prefer the provided next question over a competing question. Never invent a diagnostic percentage.', 'tools': tools, 'generation_config': {'max_output_tokens': 6000, 'thinking_level': 'low'}}
                 if previous:
                     params['previous_interaction_id'] = previous
                 result = await provider.create(**params)
                 previous = result.get('id')
                 steps = result.get('steps', [])
+                if restricted and any(step.get('type', '').startswith(('google_search', 'web_search', 'url_context')) for step in steps):
+                    raise ValueError('Web access is blocked in remote breakdown mode. The provider returned a forbidden web operation.')
                 text, citations, suggestions = parse_output(steps)
                 answer.search_suggestions.extend(suggestions)
                 function_calls = []
@@ -145,12 +173,18 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
                             output = dispatch(name, call.get('arguments', {}), incident)
                             summaries = {'update_vehicle_profile': 'User-provided vehicle details saved', 'record_observations': 'Source-linked observations registered', 'get_vehicle_profile': 'Vehicle details retrieved', 'create_mechanic_report': 'Factual mechanic report created',
                                          'list_available_sensors': 'Demo sensor capabilities retrieved', 'read_vehicle_sensors': 'Simulated current sensor readings retrieved',
-                                         'read_sensor_history': 'Simulated sensor history retrieved', 'classify_diagnosis': 'Synthetic Bayesian hypotheses computed'}
+                                         'read_sensor_history': 'Simulated sensor history retrieved', 'classify_diagnosis': 'Synthetic Bayesian hypotheses computed',
+                                         'search_bmw_knowledge': 'BMW 330i G20 knowledge cards retrieved', 'check_bmw_recalls': 'BMW 330i G20 recall campaigns checked'}
                             answer.activity.append(Event(tool=name, initiator='model', summary=summaries[name], arguments=call.get('arguments', {}), result=output))
                             if name == 'record_observations':
                                 observations_recorded = True
                             if name == 'create_mechanic_report':
                                 answer.report = output
+                            if name in ('search_bmw_knowledge', 'check_bmw_recalls') and isinstance(output, dict):
+                                for source in output.get('sources', [])[:4]:
+                                    url = source.get('url')
+                                    if safe_url(url) and not any(c.url == url for c in tool_citations):
+                                        tool_citations.append(Citation(url=url, title=source.get('title') or urlparse(url).hostname))
                         except ValueError as error:
                             output = {'error': str(error)}
                             answer.activity.append(Event(tool='tool_validation', initiator='backend', status='failed', summary='Rejected an unknown tool or invalid arguments'))
@@ -166,17 +200,17 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
                         answer.state = 'complete'
                         return
                     if not previous:
-                        raise ValueError('Gemini returned no interaction ID for tool continuation. Please retry.')
+                        raise ValueError(f'{model_label} returned no interaction ID for tool continuation. Please retry.')
                     continue
                 if answer.media_analysis and not observations_recorded:
                     inputs = [{'type': 'text', 'text': 'Before answering this media turn, call record_observations using the message and attachment IDs provided. Use an empty observations list if there are no clear supported symptoms. Then explain the media and ask the next useful question.'}]
                     if not previous:
-                        raise ValueError('Gemini returned no interaction ID for media registration. Please retry.')
+                        raise ValueError(f'{model_label} returned no interaction ID for media registration. Please retry.')
                     continue
                 if result.get('status') != 'completed' or not text:
-                    raise ValueError('Gemini returned a blocked, incomplete or empty response. Rephrase the question or retry.')
+                    raise ValueError(f'{model_label} returned a blocked, incomplete or empty response. Rephrase the question or retry.')
                 model_event.status = 'complete'
-                model_event.summary = 'Gemini analysis complete'
+                model_event.summary = f'{model_label} analysis complete'
                 answer.activity.append(Event(tool='evaluate_safety', initiator='backend', summary='Final safety review completed'))
                 critical_observation = text.lstrip().startswith('CRITICAL OBSERVATION:') and critical(text.split('\n', 1)[0])
                 if incident.safety or critical(user.text) or critical_observation:
@@ -187,7 +221,11 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
                     answer.text = 'The generated recommendation could not pass the safety review. Vehicle safety is not determined. Seek qualified professional inspection.'
                     answer.citations = []
                 else:
-                    answer.text, answer.citations = text, citations
+                    merged_citations = list(citations)
+                    for item in tool_citations:
+                        if not any(c.url == item.url for c in merged_citations):
+                            merged_citations.append(item)
+                    answer.text, answer.citations = text, merged_citations
                 if incident.safety or not unsafe_answer(text):
                     finish(incident, answer, preserve_generated=True)
                 else:

@@ -68,6 +68,7 @@ def baseline(name: str, at: str):
 
 class Simulation(BaseModel):
     enabled: bool = False
+    internet_blocked: bool = False
     fixture_id: str = 'demo-sensors-v1'
     revision: int = 0
     snapshot_time: str = Field(default_factory=timestamp)
@@ -83,6 +84,11 @@ class Simulation(BaseModel):
 class EnableSimulation(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     enabled: bool
+
+
+class ConnectivitySimulation(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    internet_blocked: bool
 
 
 class SensorChange(BaseModel):
@@ -120,6 +126,7 @@ class ReadHistory(ReadSensors):
 
 def metadata(sim: Simulation):
     return {'source': 'simulated', 'fixture_id': sim.fixture_id, 'revision': sim.revision,
+            'internet_blocked': sim.internet_blocked,
             'snapshot_time': sim.snapshot_time, 'retrieved_at': timestamp(), 'enabled': sim.enabled,
             'note': 'Fictional demo telemetry, separate from user vehicle details; not a roadworthiness assessment.'}
 

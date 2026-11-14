@@ -1,6 +1,8 @@
 from .schemas import Incident, Vehicle, now
+from .config import WEB_TOOLS
 from .bayes import SYMPTOMS
-from .sensors import CATALOG, ReadHistory, ReadSensors, history, list_sensors, read
+from .bmw import BMW_MAKE, BMW_MODEL, BMW_TOOL_SPECS, annotate_sensors, check_recalls, search_knowledge
+from .sensors import CATALOG, ReadHistory, ReadSensors, expand, history, list_sensors, read
 from .diagnostics import classify, record_sensor_result, refresh_current, unresolved_questions
 from .observations import OBSERVATION_TOOL, record
 
@@ -38,20 +40,41 @@ def mechanic_report(incident: Incident):
     }
 
 
+def tools_for(incident: Incident):
+    tools = TOOLS + BMW_TOOL_SPECS if incident.mode == 'bmw_g20' else TOOLS
+    if incident.sensor_simulation.internet_blocked:
+        return [tool for tool in tools if tool['type'] == 'function' and tool['name'] not in WEB_TOOLS]
+    return tools
+
+
 def dispatch(name: str, arguments: dict, incident: Incident):
+    if incident.sensor_simulation.internet_blocked and name in WEB_TOOLS:
+        raise ValueError('Web access is blocked in remote breakdown mode. Use sensor readings and bundled references only.')
     if not isinstance(arguments, dict):
         raise ValueError('Tool arguments must be an object.')
     if name == 'update_vehicle_profile':
         if set(arguments) - {'message_id', 'make', 'model', 'year'} or len(arguments) < 2:
             raise ValueError('Provide a source message and at least one vehicle detail.')
         message = next((m for m in incident.messages if m.role == 'user' and m.id == arguments.get('message_id')), None)
-        updates = {k:v for k,v in arguments.items() if k != 'message_id'}
+        updates = {k: v for k, v in arguments.items() if k != 'message_id'}
+        if incident.mode == 'bmw_g20':
+            preset = {'make': BMW_MAKE, 'model': BMW_MODEL}
+            updates = {
+                k: v for k, v in updates.items()
+                if not (k in preset and str(v).strip().casefold() in {preset[k].casefold(), '330i', '330i g20', 'g20'} and str(v).casefold() not in (message.text.casefold() if message else ''))
+            }
+            if not updates:
+                return {'vehicle': incident.vehicle.model_dump(), 'source': 'bmw_g20_workspace'}
         if not message or any(not str(v).strip() or str(v).casefold() not in message.text.casefold() for v in updates.values()):
             raise ValueError('Vehicle details must appear explicitly in the referenced user message.')
         incident.vehicle = Vehicle.model_validate({**incident.vehicle.model_dump(), **updates})
         return {'vehicle': incident.vehicle.model_dump(), 'source': 'user_provided'}
     if name == 'record_observations':
         return record(incident, arguments)
+    if name in ('search_bmw_knowledge', 'check_bmw_recalls'):
+        if incident.mode != 'bmw_g20':
+            raise ValueError('Unknown tool. Only declared read-only tools are allowed.')
+        return search_knowledge(arguments) if name == 'search_bmw_knowledge' else check_recalls(arguments, incident.vehicle.year)
     if name in ('list_available_sensors', 'read_vehicle_sensors', 'read_sensor_history') and not incident.sensor_simulation.enabled:
         raise ValueError('Simulation is disabled for this investigation. Sensor tools are unavailable.')
     if name == 'classify_diagnosis':
@@ -66,16 +89,21 @@ def dispatch(name: str, arguments: dict, incident: Incident):
         result = history(incident.sensor_simulation, query) if name == 'read_sensor_history' else read(incident.sensor_simulation, query)
         if name == 'read_vehicle_sensors':
             record_sensor_result(incident, result, 'sensor-tool:' + str(result['revision']) + ':' + ','.join(query.sensor_names))
-        return result
+        return annotate_sensors(result, expand(query.sensor_names)) if incident.mode == 'bmw_g20' else result
     if arguments:
         raise ValueError('This tool accepts no arguments; incident context is resolved by the server.')
     if name == 'list_available_sensors':
-        return list_sensors(incident.sensor_simulation)
+        result = list_sensors(incident.sensor_simulation)
+        return annotate_sensors(result) if incident.mode == 'bmw_g20' else result
     if name == 'get_vehicle_profile':
         profile = incident.vehicle.model_dump()
-        return {'vehicle': profile, 'source': 'user_provided', 'missing': [k for k, v in profile.items() if not v], 'sensor_connection': False,
+        base = {'vehicle': profile, 'source': 'bmw_g20_workspace' if incident.mode == 'bmw_g20' else 'user_provided',
+                'missing': [k for k, v in profile.items() if not v], 'sensor_connection': False,
                 'simulation': {'enabled': incident.sensor_simulation.enabled, 'revision': incident.sensor_simulation.revision,
                                'note': 'Demo telemetry belongs to a fictional vehicle, not these user-entered details.'}}
+        if incident.mode == 'bmw_g20':
+            base['variant_scope'] = 'BMW 330i (G20) 2019–2024 petrol (B46TU/B48TU); excludes 330e PHEV'
+        return base
     if name == 'create_mechanic_report':
         return mechanic_report(incident)
     raise ValueError('Unknown tool. Only declared read-only tools are allowed.')

@@ -1,4 +1,35 @@
 import {test,expect} from '@playwright/test';
+
+test('remote breakdown toggle reaches the real backend and survives reload',async({page})=>{
+ const originalResponse=await page.request.get('/api/simulator');expect(originalResponse.ok()).toBe(true);
+ const original=await originalResponse.json();
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ try{
+  await page.goto('/simulator');await expect(page.getByRole('heading',{name:'Vehicle simulator'})).toBeVisible();
+  const checkbox=page.getByRole('checkbox',{name:'Block internet access (remote breakdown)'});
+  await expect(checkbox).toBeEnabled();
+  await checkbox.click();await expect(checkbox).toBeChecked({checked:!original.internet_blocked});
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const health=await (await page.request.get('/api/health')).json();
+  expect(health.internet_blocked).toBe(!original.internet_blocked);
+  expect(health.web_search_allowed).toBe(!!original.internet_blocked);
+  if(!original.internet_blocked)expect(health.model).toBe('gemma-4-26b-a4b-it');
+  await page.reload();await expect(checkbox).toBeChecked({checked:!original.internet_blocked});
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  if(process.env.QA_SCREENSHOT_DIR)await page.screenshot({path:`${process.env.QA_SCREENSHOT_DIR}/simulator-live-fixed.png`,animations:'disabled'});
+  expect(errors).toEqual([]);
+ }finally{
+  const current=await (await page.request.get('/api/simulator')).json();
+  if(current.internet_blocked!==original.internet_blocked){
+   const restored=await page.request.patch('/api/simulator/connectivity',{headers:{'If-Match':String(current.revision)},data:{internet_blocked:!!original.internet_blocked}});
+   expect(restored.ok()).toBe(true);
+  }
+ }
+});
+
 test('shared simulator: all channels, scenarios, histories, stale drafts and mobile',async({page,context})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('/simulator');await expect(page.locator('.reading-row')).toHaveCount(17);

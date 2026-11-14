@@ -480,7 +480,7 @@ def finalize_dialogue(incident, answer, question):
         answer.citations = [c.model_copy(update={'start_index': None, 'end_index': None}) for c in answer.citations]
         original = answer.text
     questions = list(re.finditer(r'[^.!?\n]*\?', original))
-    if questions and not all(incident.vehicle.model_dump().values()) and re.search(r'\b(make|model|year)\b', questions[0].group(), re.IGNORECASE) and not incident.diagnostic_state.stopped:
+    if questions and (incident.mode != 'bmw_g20' or question is None) and not all(incident.vehicle.model_dump().values()) and re.search(r'\b(make|model|year)\b', questions[0].group(), re.IGNORECASE) and not incident.diagnostic_state.stopped:
         question = Question(id='vehicle:' + answer.id, text=questions[0].group().strip())
     if question is None and questions and not incident.diagnostic_state.stopped:
         question = Question(id='model:' + answer.id, text=questions[0].group().strip())
