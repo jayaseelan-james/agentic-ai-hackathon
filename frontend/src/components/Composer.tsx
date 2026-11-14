@@ -43,7 +43,7 @@ export default function Composer({ onSend, busy }: {onSend: (text: string, files
         {menu && <div className="attach-menu"><button onClick={() => pick('image/*')}><Image/>Upload images</button><button onClick={() => pick('video/*')}><Video/>Upload video</button><button onClick={() => { setRecord('audio'); setMenu(false); }}><Mic/>Record audio</button><button onClick={() => { setRecord('video'); setMenu(false); }}><Video/>Record video</button><button onClick={() => pick('audio/*')}><Mic/>Upload audio</button></div>}
       </div><button disabled={busy} onClick={() => setRecord('audio')}><Mic/><span>Voice</span></button><button disabled={busy} onClick={() => setRecord('video')}><Camera/><span>Camera</span></button><button disabled={busy} onClick={() => pick('image/*,video/*')}><Image/><span>Gallery</span></button>
       <button className="send primary" aria-label="Send message" disabled={busy || (!text.trim() && !drafts.length)} onClick={() => void send()}><Send/></button></div>
-    </div><p className="composer-hint">{busy ? 'Investigating with Gemini…' : 'Media is sent to Google for analysis. Review before sending.'}</p>
+    </div><p className="composer-hint">{busy ? 'Reviewing the evidence…' : 'Media is sent to Google for analysis. Review before sending.'}</p>
     <input ref={upload} type="file" hidden multiple accept={accept} onChange={e => { add(Array.from(e.target.files || [])); e.target.value = ''; }}/>
     {record && <Recorder kind={record} onClose={() => setRecord(null)} onAttach={file => add([file])}/>}
   </div>;

@@ -56,14 +56,12 @@ async function openChat(page: Page) {
 test('vehicle details, processing, citations, tool activity, safety and new chat',async ({page})=>{
   const errors: string[]=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&m.text().includes('same key'))errors.push(m.text());});
   await openChat(page);await expect(page).toHaveTitle(/AutoSage/);
-  await page.getByText('Edit vehicle details',{exact:true}).click();
-  await page.getByLabel('Make',{exact:true}).fill('Toyota');await page.getByLabel('Model',{exact:true}).fill('Corolla');await page.getByLabel('Year',{exact:true}).fill('2020');
-  await page.getByRole('button',{name:'Save vehicle'}).click();
-  await expect(page.locator('.chat-header')).toContainText('2020 Toyota Corolla');
+  await expect(page.getByText('Edit vehicle details',{exact:true})).toHaveCount(0);
   await page.getByRole('textbox',{name:'Message'}).fill('My tire warning is yellow');await page.getByRole('button',{name:'Send message'}).click();
   await expect(page.locator('.processing')).toBeVisible();
   await expect(page.locator('.sources')).toContainText('Official source');
-  await page.getByText('Investigation activity',{exact:true}).click();await expect(page.locator('.activity')).toContainText('google_search');
+  await expect(page.locator('.activity')).toHaveCount(0);
+  await expect(page.locator('.diagnostic-details, .demo-sensors')).toHaveCount(0);
   await expect(page.locator('.search-suggestions')).toHaveCount(1);
   await page.getByRole('textbox',{name:'Message'}).fill('My brake pedal feels soft brake');await page.getByRole('button',{name:'Send message'}).click();
   await expect(page.locator('.safety')).toContainText('Do not continue driving');
@@ -103,5 +101,5 @@ test('failed generation retries the saved message',async ({page})=>{
     await route.fulfill({status:202,json:saved});
   });
   await page.route('**/api/incidents/*/messages/a/retry',async route=>{failed=false;saved.messages[1].state='complete';saved.messages[1].error=null;saved.messages[1].text='Investigation recovered.';await route.fulfill({status:202,json:saved});});
-  await page.getByRole('textbox',{name:'Message'}).fill('Retry test');await page.getByRole('button',{name:'Send message'}).click();await expect(page.getByText('Gemini quota reached')).toBeVisible();await page.getByRole('button',{name:'Retry investigation'}).click();await expect(page.getByText('Investigation recovered.')).toBeVisible();expect(failed).toBe(false);
+  await page.getByRole('textbox',{name:'Message'}).fill('Retry test');await page.getByRole('button',{name:'Send message'}).click();await expect(page.getByText(/assistant is temporarily unavailable/i)).toBeVisible();await page.getByRole('button',{name:'Retry investigation'}).click();await expect(page.getByText('Investigation recovered.')).toBeVisible();expect(failed).toBe(false);
 });
