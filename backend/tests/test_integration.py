@@ -176,3 +176,19 @@ def test_multimodal_sensor_bayes_and_search_prose_survive_finalization(client,mo
     registry=client.get(f'/api/incidents/{id}/inspection').json()['evidence']
     assert any(e['source']=='media_observed' for e in registry)
     assert any(e['source']=='simulated_sensor' for e in registry)
+
+def test_vehicle_details_from_chat_and_conversational_question():
+    from backend.app.tools import dispatch
+    from backend.app.diagnostics import finalize_dialogue
+    from backend.app.diagnostic_types import Question
+    incident=Incident()
+    answer=Message(role='assistant',text='To check the correct manual, what make, model and year is your car?')
+    finalize_dialogue(incident,answer,Question(id='symptom',text='Is the warning steady?'))
+    assert answer.follow_up_question.id.startswith('vehicle:')
+    user=Message(role='user',text='It is a 2020 Toyota Corolla.')
+    incident.messages.append(user)
+    result=dispatch('update_vehicle_profile',{'message_id':user.id,'make':'Toyota','model':'Corolla','year':2020},incident)
+    assert result['vehicle']=={'make':'Toyota','model':'Corolla','year':2020}
+    with pytest.raises(ValueError):
+        dispatch('update_vehicle_profile',{'message_id':user.id,'make':'Honda'},incident)
+    assert incident.vehicle.make=='Toyota'

@@ -479,6 +479,8 @@ def finalize_dialogue(incident, answer, question):
         answer.citations = [c.model_copy(update={'start_index': None, 'end_index': None}) for c in answer.citations]
         original = answer.text
     questions = list(re.finditer(r'[^.!?\n]*\?', original))
+    if questions and not all(incident.vehicle.model_dump().values()) and re.search(r'\b(make|model|year)\b', questions[0].group(), re.IGNORECASE) and not incident.diagnostic_state.stopped:
+        question = Question(id='vehicle:' + answer.id, text=questions[0].group().strip())
     if question is None and questions and not incident.diagnostic_state.stopped:
         question = Question(id='model:' + answer.id, text=questions[0].group().strip())
     if questions:
@@ -490,6 +492,9 @@ def finalize_dialogue(incident, answer, question):
         pieces.append(original[end:])
         answer.text = ''.join(pieces).strip()
         answer.citations = [c.model_copy(update={'start_index': None, 'end_index': None}) for c in answer.citations]
+    if question and incident.diagnostic_state.context == 'demo':
+        question = question.model_copy(update={'text': question.text.replace('For the fictional demo vehicle: ', '').replace('the fictional vehicle', 'the vehicle').replace('demo readings', 'sensor readings').replace('demo conditions', 'recorded conditions')})
     answer.follow_up_question = question
+    incident.diagnostic_state.pending = question
     if not answer.text and question:
         answer.text = 'Let us narrow this down using the evidence available.'

@@ -1,4 +1,4 @@
-from .schemas import Incident, now
+from .schemas import Incident, Vehicle, now
 from .bayes import SYMPTOMS
 from .sensors import CATALOG, ReadHistory, ReadSensors, history, list_sensors, read
 from .diagnostics import classify, record_sensor_result, refresh_current, unresolved_questions
@@ -9,6 +9,7 @@ SENSOR_NAMES = {'type': 'array', 'items': {'type': 'string'}, 'minItems': 1, 'ma
 
 TOOLS = [
     OBSERVATION_TOOL,
+    {'type': 'function', 'name': 'update_vehicle_profile', 'description': 'Save vehicle details explicitly supplied in a user chat message. Copy make/model/year exactly; omit fields not provided. Never infer from media or search.', 'parameters': {'type': 'object', 'properties': {'message_id': {'type':'string'}, 'make': {'type':'string'}, 'model': {'type':'string'}, 'year': {'type':'integer','minimum':1900,'maximum':2100}}, 'required':['message_id'], 'additionalProperties':False}},
     {'type': 'function', 'name': 'classify_diagnosis', 'description': 'Compute synthetic-trained Bayesian fault categories from accepted incident evidence only. Unknown observations are marginalized. Do not invent probabilities or expose competing causes in ordinary chat.', 'parameters': {'type': 'object', 'properties': {'domain': {'type': 'string', 'enum': list(SYMPTOMS)}}, 'required': ['domain'], 'additionalProperties': False}},
     {'type': 'function', 'name': 'list_available_sensors', 'description': 'Discover optional demo sensor channels, units, availability and suggested history windows. No hardware connection. Simulation may be disabled.', 'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}},
     {'type': 'function', 'name': 'read_vehicle_sensors', 'description': 'Read requested current simulated sensor values for this chat. Retrieval success does not mean the vehicle is healthy. No mutation.', 'parameters': {'type': 'object', 'properties': {'sensor_names': SENSOR_NAMES}, 'required': ['sensor_names'], 'additionalProperties': False}},
@@ -40,6 +41,15 @@ def mechanic_report(incident: Incident):
 def dispatch(name: str, arguments: dict, incident: Incident):
     if not isinstance(arguments, dict):
         raise ValueError('Tool arguments must be an object.')
+    if name == 'update_vehicle_profile':
+        if set(arguments) - {'message_id', 'make', 'model', 'year'} or len(arguments) < 2:
+            raise ValueError('Provide a source message and at least one vehicle detail.')
+        message = next((m for m in incident.messages if m.role == 'user' and m.id == arguments.get('message_id')), None)
+        updates = {k:v for k,v in arguments.items() if k != 'message_id'}
+        if not message or any(not str(v).strip() or str(v).casefold() not in message.text.casefold() for v in updates.values()):
+            raise ValueError('Vehicle details must appear explicitly in the referenced user message.')
+        incident.vehicle = Vehicle.model_validate({**incident.vehicle.model_dump(), **updates})
+        return {'vehicle': incident.vehicle.model_dump(), 'source': 'user_provided'}
     if name == 'record_observations':
         return record(incident, arguments)
     if name in ('list_available_sensors', 'read_vehicle_sensors', 'read_sensor_history') and not incident.sensor_simulation.enabled:

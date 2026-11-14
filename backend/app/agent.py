@@ -10,6 +10,7 @@ from .sensors import metadata
 from .diagnostics import classify, finish, ingest_user, next_question, snapshot
 
 SYSTEM = '''You are AutoSage, an automotive education and diagnostic investigation assistant.
+There is no vehicle-details form. When vehicle details are needed and missing, ask for the missing make, model and year as ONE conversational follow-up question that the user can answer in chat. Do not demand a form or block general guidance. Save explicitly supplied chat details with update_vehicle_profile, including corrections, before using get_vehicle_profile. Never infer a vehicle identity.
 Use tools when needed. Read get_vehicle_profile before vehicle-specific guidance; ask for missing make/model/year before specifications.
 Use Google Search to verify technical guidance and manufacturer instructions, preferring official manufacturers and established automotive sources. Use URL context for relevant public references. Do not search unnecessarily for greetings or clarification questions.
 Report only citations returned by tools; never invent sources, measurements, trouble codes, sensor access, repair prices, diagnostic probabilities, or a claim a vehicle is safe to drive.
@@ -142,7 +143,7 @@ async def investigate(incident: Incident, user: Message, answer: Message, media:
                         name = call.get('name', '')
                         try:
                             output = dispatch(name, call.get('arguments', {}), incident)
-                            summaries = {'record_observations': 'Source-linked observations registered', 'get_vehicle_profile': 'Vehicle details retrieved', 'create_mechanic_report': 'Factual mechanic report created',
+                            summaries = {'update_vehicle_profile': 'User-provided vehicle details saved', 'record_observations': 'Source-linked observations registered', 'get_vehicle_profile': 'Vehicle details retrieved', 'create_mechanic_report': 'Factual mechanic report created',
                                          'list_available_sensors': 'Demo sensor capabilities retrieved', 'read_vehicle_sensors': 'Simulated current sensor readings retrieved',
                                          'read_sensor_history': 'Simulated sensor history retrieved', 'classify_diagnosis': 'Synthetic Bayesian hypotheses computed'}
                             answer.activity.append(Event(tool=name, initiator='model', summary=summaries[name], arguments=call.get('arguments', {}), result=output))
