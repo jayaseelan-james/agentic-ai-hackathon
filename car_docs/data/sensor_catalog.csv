@@ -1,0 +1,18 @@
+id,domain,name,unit,hardware_basis,retrieval_path,generic_obd_request,support_status,caveats,source_ids
+tire_pressure_fl,Tires,Front-left tire inflation pressure,bar,direct TPMS transducer,OEM ECU/TPMS or vehicle display,none,conditional,Requires direct TPMS and accessible OEM interface,"S008,S009"
+tire_pressure_fr,Tires,Front-right tire inflation pressure,bar,direct TPMS transducer,OEM ECU/TPMS or vehicle display,none,conditional,Same,"S008,S009"
+tire_pressure_rl,Tires,Rear-left tire inflation pressure,bar,direct TPMS transducer,OEM ECU/TPMS or vehicle display,none,conditional,Same,"S008,S009"
+tire_pressure_rr,Tires,Rear-right tire inflation pressure,bar,direct TPMS transducer,OEM ECU/TPMS or vehicle display,none,conditional,Same,"S008,S009"
+brake_fluid_level,Brakes,Brake-fluid reservoir warning/level,status,"reservoir switch, spec-dependent",OEM diagnostic/check-control,none,conditional,Do not assume continuous percent/volume; warning may be binary,"S001,S016"
+brake_pressure,Brakes,Brake hydraulic control pressure,bar,DSC/braking hydraulics,"OEM diagnostic data, if exposed",none,conditional,Neither pressure nor its absence verifies brake safety,S016
+coolant_temp,Cooling,Engine coolant temperature,°C,engine coolant temperature sensor,Mode 01 PID 05 if supported,0105,standard_candidate,Useful trend + warning; temperature alone cannot identify cause,"S003,S004,S029"
+coolant_level,Cooling,Coolant level warning/status,status,"coolant reservoir level monitoring, spec-dependent",check control/OEM,none,conditional,No continuous liters assumed,"S001,S003"
+fan_rpm,Cooling,Engine cooling fan actual speed,rpm,fan motor controller (actual feedback TBD),OEM diagnostics if provided,none,unverified,A PWM fan command is not actual fan RPM,"S003,S016"
+vehicle_speed,Cooling,Vehicle speed,km/h,vehicle speed source,Mode 01 PID 0D if supported,010D,standard_candidate,Vehicle speed helps add context for cooling diagnosis,S029
+battery_voltage,Starting/charging,12 V / ECU supply voltage,V,ECU/vehicle electrical monitoring,Mode 01 PID 42 is CONTROL MODULE voltage; OEM battery values may differ,0142,standard_candidate,Do not label module voltage as exact battery-post voltage,"S010,S029"
+cranking_rpm,Starting/charging,Engine rotational speed during crank,rpm,crankshaft position system,OEM logging or high-rate OBD RPM,010C,conditional,Generic OBD polling may miss the cranking event,"S007,S029"
+starter_current,Starting/charging,Current through starter motor,A,not confirmed as dedicated sensor,possibly inferred from battery current; direct measurement unverified,none,unverified,IBS battery current is not necessarily starter current; PHEV auxiliary path differs,"S011,S016"
+engine_rpm,Engine running,Engine speed,rpm,crankshaft speed measurement,Mode 01 PID 0C if supported,010C,standard_candidate,Core live measurement,"S007,S029"
+misfire_count,Engine running,Cylinder misfire counters,count,DME misfire detection logic,OEM values or Mode 06 if ECU exposes relevant tests,none,conditional,"Counters, standardized trouble codes and monitor data differ","S007,S016"
+fuel_pressure,Engine running,Fuel system pressure,kPa/bar,fuel rail pressure sensor,Mode 01 PID 0A or other rail PID if supported; otherwise OEM,010A,conditional,Distinguish low-side from high-side pressure: not interchangeable,"S005,S006,S029"
+mass_airflow,Engine running,Mass airflow estimate or sensor reading,g/s,hot-film air mass and engine model,Mode 01 PID 10 if supported,0110,standard_candidate,DME may substitute modeled values after sensor faults,"S007,S029"

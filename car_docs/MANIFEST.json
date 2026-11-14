@@ -1,0 +1,142 @@
+{
+  "created_utc": "2026-11-14T13:00:00Z",
+  "bundle_purpose": "BMW G20 330i offline research, not full copyrighted manuals",
+  "file_count": 27,
+  "files": [
+    {
+      "path": "AGENT_CONTEXT.md",
+      "bytes": 2669,
+      "sha256": "69b7767ba31ccaab770da96c3ec249c6c99400217d0f79fc9a7b184b9284cb12"
+    },
+    {
+      "path": "LEGAL_AND_PROVENANCE.md",
+      "bytes": 1664,
+      "sha256": "85440ddde07655c41607e8528cad1de21c27d79b81336ef676604e4512b0776f"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3070,
+      "sha256": "4e21f1e70c5fa2ea2337b4896807cfeb09be57f3a1dbe27c784d87ddd4b83390"
+    },
+    {
+      "path": "START_HERE.html",
+      "bytes": 52617,
+      "sha256": "1c8972324c4156aff6f4b4f6d06e569226f4fe72b544e8d2e51a6993564ceb70"
+    },
+    {
+      "path": "data/rag_knowledge_cards.jsonl",
+      "bytes": 12508,
+      "sha256": "250c1bc26158df66106a07150cc4aeeeade3ef9456e5eca8dcda67efeae0f204"
+    },
+    {
+      "path": "data/sensor_catalog.csv",
+      "bytes": 3572,
+      "sha256": "a4571199bca3406f83c897ddea9fc1a8fb094f55ddca4e1a62cad35fa21cf7ce"
+    },
+    {
+      "path": "data/sensor_catalog.json",
+      "bytes": 7019,
+      "sha256": "607434c34933f8657a7e9d62b4158e73e480dc3e0713dc2e9ec4b930758d4411"
+    },
+    {
+      "path": "data/synthetic_demo_scenarios.jsonl",
+      "bytes": 3883,
+      "sha256": "1ae35473c3d53c2628631e8a765c6063fa71b57919d3290f350a3b76f9b7edc5"
+    },
+    {
+      "path": "data/synthetic_sample_telemetry.jsonl",
+      "bytes": 1649,
+      "sha256": "e625dfc7091bd55cae2102effcf55986b024b2864375960f824ee367cb993fcb"
+    },
+    {
+      "path": "data/us_2021_330i_recalls_verified.csv",
+      "bytes": 1205,
+      "sha256": "aded1b0b36b500ccbffc63653c92b6ec18115453c102e0558fb04ecd493d3078"
+    },
+    {
+      "path": "data/us_2021_330i_recalls_verified.json",
+      "bytes": 2544,
+      "sha256": "0a5cdc6ab36d4a067e688f7f31bfae1f021dd39239025cfd148f4f0a02b7114d"
+    },
+    {
+      "path": "notes/00_SCOPE.md",
+      "bytes": 2017,
+      "sha256": "5dd7a18a63331a351664346d6f1c9183d1404783af83a39f0e286229ea32074d"
+    },
+    {
+      "path": "notes/01_TIRES.md",
+      "bytes": 1597,
+      "sha256": "b2cc9a4a6d98a57e20d14068bd5446b7bd06dbf8f432c0d1b796a8f90ac1d787"
+    },
+    {
+      "path": "notes/02_BRAKES.md",
+      "bytes": 1224,
+      "sha256": "7a0d50bad5541ef44038b1ad1a52aeeb54909f7fc94266ed907ad6d1b3c537f8"
+    },
+    {
+      "path": "notes/03_COOLING.md",
+      "bytes": 1554,
+      "sha256": "c6595b0f43fc1c9f9e89a26cc59e9bb5c3d33fcd650ffdaee62a3e8ba4607fe7"
+    },
+    {
+      "path": "notes/04_STARTING_AND_BATTERY.md",
+      "bytes": 1584,
+      "sha256": "7fe942668cdd6694b1a43644aeaab81269a8ac97b6881a6bfdd0eb4cb5884fd0"
+    },
+    {
+      "path": "notes/05_ENGINE_RUNNING.md",
+      "bytes": 1353,
+      "sha256": "e3c870cbad81ca112217dfe5b2adc2acb4c4c437d49db33f9ee815c4a181e22d"
+    },
+    {
+      "path": "notes/06_ACCESS_AND_OBD.md",
+      "bytes": 1554,
+      "sha256": "356436bac753c8d3a01c70a352d28404100d3935c20846d66577b9612bd2b005"
+    },
+    {
+      "path": "notes/07_RECALL_AND_APPLICABILITY.md",
+      "bytes": 1084,
+      "sha256": "bdaae204fb916abda8c7f1c4c86c61991e2b1b0db97cf5045807b519de591615"
+    },
+    {
+      "path": "notes/08_TRIAGE_POLICY.md",
+      "bytes": 1500,
+      "sha256": "f96bb08d3fc7953936382f648c3cbd5b73b73499a4963281536d4aace53cef8b"
+    },
+    {
+      "path": "scripts/demo_diagnostic.py",
+      "bytes": 1070,
+      "sha256": "0bbbf7796c94abe1fa3ac10eb6bc054704801167a41bc633ff3631dc6eea4591"
+    },
+    {
+      "path": "scripts/export_rag_from_notes.py",
+      "bytes": 800,
+      "sha256": "4e74f72861a7941516c28727b60e289c8ede2a66ea9909dcb6dae34f770cb73a"
+    },
+    {
+      "path": "scripts/fetch_public_nhtsa.py",
+      "bytes": 1236,
+      "sha256": "b33aab3df52d24780858fba7988986b7ad54e8e243514c3202bd97dc8fadebcd"
+    },
+    {
+      "path": "scripts/search_knowledge.py",
+      "bytes": 763,
+      "sha256": "5f3ce3b2ee67301f898e0cb0e7089157acee4a5579182a40894792c417a537a8"
+    },
+    {
+      "path": "sources/ONLINE_LINKS.md",
+      "bytes": 6424,
+      "sha256": "acf3b6eb7483afee25e445ade40b7b5b0dc348dee6d7f168813b04ee04cf6e5f"
+    },
+    {
+      "path": "sources/source_catalog.csv",
+      "bytes": 7700,
+      "sha256": "c612d9fbff8bf22308858053e92657801a7f9ad47e730c09bc059cb95d4e0fd7"
+    },
+    {
+      "path": "sources/source_catalog.json",
+      "bytes": 13132,
+      "sha256": "09d049be9734ea234619d30818fbdf2c64f42e75f0130fd2af7615b88a31c18a"
+    }
+  ]
+}

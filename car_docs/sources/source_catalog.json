@@ -1,0 +1,322 @@
+[
+  {
+    "id": "S001",
+    "title": "BMW G20 owner manual index (third-party transcription)",
+    "document_type": "Owner handbook",
+    "url": "https://www.bmw3g20.com/bmw_3_series_g20_2018_2026_owners_manual-2859.html",
+    "provider_class": "owner",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Owner functions, warnings and breakdown assistance",
+    "applicability": "all; options/markets vary"
+  },
+  {
+    "id": "S002",
+    "title": "BMW G20 technical training index (third-party transcription)",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/bmw_3_series_g20_2018_2026_training_manual-3259.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Includes petrol-engine training and separate plug-in hybrid training",
+    "applicability": "mixed; filter by subsystem"
+  },
+  {
+    "id": "S003",
+    "title": "B46TU/B48TU cooling system",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/cooling_system-3388.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Split cooling, heat management and coolant pump",
+    "applicability": "B46TU/B48TU engine-specific"
+  },
+  {
+    "id": "S004",
+    "title": "B46TU/B48TU heat management module",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/heat_management_module-3390.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Coolant routing module and its control inputs",
+    "applicability": "B46TU/B48TU engine-specific"
+  },
+  {
+    "id": "S005",
+    "title": "B46TU/B48TU fuel preparation",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/fuel_preparation-3396.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "High-pressure injection architecture and rail sensor",
+    "applicability": "B46TU/B48TU engine-specific"
+  },
+  {
+    "id": "S006",
+    "title": "B46TU/B48TU high-pressure pump",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/fuel_high_pressure_pump-3397.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Pump control, high-pressure hazards",
+    "applicability": "B46TU/B48TU engine-specific"
+  },
+  {
+    "id": "S007",
+    "title": "B46TU/B48TU DME engine electronics",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/engine_electrical_system-3400.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "DME inputs, air mass and integrated pressure/temperature measurement",
+    "applicability": "B46TU/B48TU engine-specific"
+  },
+  {
+    "id": "S008",
+    "title": "G20 TPMS system",
+    "document_type": "Owner handbook",
+    "url": "https://www.bmw3g20.com/tire_pressure_monitor_tpm-3134.html",
+    "provider_class": "owner",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Direct tire-pressure monitor overview",
+    "applicability": "when equipped with direct TPM"
+  },
+  {
+    "id": "S009",
+    "title": "G20 TPM tire settings and display",
+    "document_type": "Owner handbook",
+    "url": "https://www.bmw3g20.com/tire_settings-3136.html",
+    "provider_class": "owner",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Individual tire pressures and tyre target-setting",
+    "applicability": "when equipped with direct TPM"
+  },
+  {
+    "id": "S010",
+    "title": "G20 low-voltage electrical system",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/low_voltage_vehicle_electrical_system-3338.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Electrical introduction; section contains PHEV-specific details",
+    "applicability": "G20 PHEV-focused; do not generalise"
+  },
+  {
+    "id": "S011",
+    "title": "G20 PHEV start-up system",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/start_up_system-3340.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Hybrid auxiliary battery and dual start path",
+    "applicability": "PHEV ONLY; not 330i petrol"
+  },
+  {
+    "id": "S012",
+    "title": "G20 PHEV bus systems",
+    "document_type": "Technical training",
+    "url": "https://www.bmw3g20.com/bus_systems-3342.html",
+    "provider_class": "training",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Networks common and changes in PHEV architecture",
+    "applicability": "PHEV-focused"
+  },
+  {
+    "id": "S013",
+    "title": "BMW G20 owner + training sitemap",
+    "document_type": "Source discovery",
+    "url": "https://www.bmw3g20.com/sitemap.html",
+    "provider_class": "index",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Find additional source pages",
+    "applicability": "mixed; verify applicability"
+  },
+  {
+    "id": "S014",
+    "title": "Official BMW B46TU/B48TU training PDF (ST1837)",
+    "document_type": "Technical training",
+    "url": "https://bmwtechinfo.bmwgroup.com/tech_training_manual/ST1837%20B46TU-B48TU%20Engines.pdf",
+    "provider_class": "official_bmw",
+    "reproduction_status": "Explicit prohibition on copying/transferring without written permission; link only",
+    "relevance": "Official training on engine systems",
+    "applicability": "engine variant needs VIN match"
+  },
+  {
+    "id": "S015",
+    "title": "Official BMW General Vehicle Electronics 2018 (ST1856)",
+    "document_type": "Technical training",
+    "url": "https://bmwtechinfo.bmwgroup.com/tech_training_manual/ST1856%20General%20Vehicle%20Electronics%202018.pdf",
+    "provider_class": "official_bmw",
+    "reproduction_status": "Copyrighted; link only",
+    "relevance": "Electronics architecture and ECUs",
+    "applicability": "model/year context; verify"
+  },
+  {
+    "id": "S016",
+    "title": "BMW AOS official professional information portal",
+    "document_type": "Repair portal",
+    "url": "https://aos.bmwgroup.com/",
+    "provider_class": "official_bmw",
+    "reproduction_status": "Account and subscription/license; not included",
+    "relevance": "ISTA repair instructions, wiring diagrams, AIR data",
+    "applicability": "Germany/EU access"
+  },
+  {
+    "id": "S017",
+    "title": "BMW Technical Information System website user guide",
+    "document_type": "Repair portal guide",
+    "url": "https://bmwtechinfo.bmwgroup.com/tisUI/assets/site_information.pdf",
+    "provider_class": "official_bmw",
+    "reproduction_status": "Copyrighted BMW document; link only",
+    "relevance": "Explains ISTA, AIR, AOS access requirements",
+    "applicability": "US/Canada guide; Germany use AOS"
+  },
+  {
+    "id": "S018",
+    "title": "BMW G20 BMWTeka repair catalogue",
+    "document_type": "Third-party repair catalogue",
+    "url": "https://bmwteka.com/en/bmw/g20",
+    "provider_class": "third_party",
+    "reproduction_status": "Rights unclear; link only; registration may be necessary",
+    "relevance": "Catalog of repair procedures and wiring diagrams",
+    "applicability": "filter by 330i and production date"
+  },
+  {
+    "id": "S019",
+    "title": "G20 bulletin index",
+    "document_type": "Service bulletin index",
+    "url": "https://itsanalogue.github.io/bmw-tsb/G20.html",
+    "provider_class": "third_party",
+    "reproduction_status": "Rights vary by linked bulletin; link only",
+    "relevance": "Bulletin discovery",
+    "applicability": "VIN and production-date fit vary"
+  },
+  {
+    "id": "S020",
+    "title": "BMW Driver guide USA",
+    "document_type": "Official owner resource",
+    "url": "https://www.bmwusa.com/owners-manuals.html",
+    "provider_class": "official_bmw",
+    "reproduction_status": "Copyrighted; VIN-specific access; link only",
+    "relevance": "Owner functions and safety warnings",
+    "applicability": "region specific"
+  },
+  {
+    "id": "S021",
+    "title": "BMW Group official recall VIN checker",
+    "document_type": "Official recalls",
+    "url": "https://www.bmwgroup.com/en/general/regulations/recall/recall-english.html",
+    "provider_class": "official_bmw",
+    "reproduction_status": "Online lookup, not included",
+    "relevance": "Check exact VIN to establish whether recall applies",
+    "applicability": "VIN-specific"
+  },
+  {
+    "id": "S022",
+    "title": "BMW Germany recall lookup",
+    "document_type": "Official recalls",
+    "url": "https://www.bmw.de/de/topics/service-zubehoer/bmw-service/rueckrufe.html",
+    "provider_class": "official_bmw",
+    "reproduction_status": "Online lookup, not included",
+    "relevance": "Germany-specific VIN lookup",
+    "applicability": "Germany"
+  },
+  {
+    "id": "S023",
+    "title": "Germany KBA recall database",
+    "document_type": "Government dataset",
+    "url": "https://www.kba-online.de/rrdb/buerger/index.html",
+    "provider_class": "government",
+    "reproduction_status": "Public web data; downloadable CSV available on site",
+    "relevance": "Recall searches and downloadable tables",
+    "applicability": "Germany; exact fit varies"
+  },
+  {
+    "id": "S024",
+    "title": "NHTSA datasets and APIs",
+    "document_type": "Government dataset",
+    "url": "https://www.nhtsa.gov/nhtsa-datasets-and-apis",
+    "provider_class": "government",
+    "reproduction_status": "US public dataset; no files mirrored here",
+    "relevance": "Public recall and complaint lookup API endpoints",
+    "applicability": "US recalls only"
+  },
+  {
+    "id": "S025",
+    "title": "2021 BMW 330i NHTSA recall API",
+    "document_type": "Government dataset",
+    "url": "https://api.nhtsa.gov/recalls/recallsByVehicle?make=BMW&model=330i&modelYear=2021",
+    "provider_class": "government",
+    "reproduction_status": "Public data; selected fields below",
+    "relevance": "Seven recalls observed as of 2026-11-14",
+    "applicability": "US-spec model-year records"
+  },
+  {
+    "id": "S026",
+    "title": "NHTSA official API usage policy",
+    "document_type": "Government API",
+    "url": "https://api.nhtsa.gov/",
+    "provider_class": "government",
+    "reproduction_status": "Public; avoid bulk VIN requests",
+    "relevance": "Usage restrictions and expectations",
+    "applicability": "US"
+  },
+  {
+    "id": "S027",
+    "title": "NHTSA starter relay recall 25V636",
+    "document_type": "Government recall report",
+    "url": "https://static.nhtsa.gov/odi/rcl/2025/RCAK-25V636-0864.pdf",
+    "provider_class": "government",
+    "reproduction_status": "Public official notice; link only",
+    "relevance": "Starter relay fire risk; applicable VIN must be checked",
+    "applicability": "includes some 2019-2021 330i"
+  },
+  {
+    "id": "S028",
+    "title": "NHTSA engine starter recall 26V056",
+    "document_type": "Government recall report",
+    "url": "https://static.nhtsa.gov/odi/rcl/2026/RCLRPT-26V056-6534.pdf",
+    "provider_class": "government",
+    "reproduction_status": "Public official notice; link only",
+    "relevance": "Starter wear/thermal risk; VIN check mandatory",
+    "applicability": "includes some 2021-2024 BMW 3 Series"
+  },
+  {
+    "id": "S029",
+    "title": "python-OBD commands catalog",
+    "document_type": "Software docs",
+    "url": "https://github.com/brendan-w/python-OBD/blob/master/docs/Command%20Tables.md",
+    "provider_class": "software",
+    "reproduction_status": "Repository license applies to original content; link only",
+    "relevance": "OBD commands, PIDs, units",
+    "applicability": "generic; per-vehicle support varies"
+  },
+  {
+    "id": "S030",
+    "title": "BimmerLink product features",
+    "document_type": "Diagnostic software",
+    "url": "https://bimmerlink.app/",
+    "provider_class": "third_party",
+    "reproduction_status": "Proprietary tool/app; link only",
+    "relevance": "ECU DTCs, live data and CSV logs",
+    "applicability": "adapter/vehicle compatibility required"
+  },
+  {
+    "id": "S031",
+    "title": "BMW G20 training/manual top pages",
+    "document_type": "Source discovery",
+    "url": "https://www.bmw3g20.com/top.html",
+    "provider_class": "index",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "Most accessed owner and training sections",
+    "applicability": "mixed; verify applicability"
+  },
+  {
+    "id": "S032",
+    "title": "BMW vehicle data and control modules",
+    "document_type": "Owner handbook",
+    "url": "https://www.bmw3g20.com/general_information-2867.html",
+    "provider_class": "owner",
+    "reproduction_status": "Copyrighted third-party website; link only",
+    "relevance": "ECUs process data from sensors and other ECUs",
+    "applicability": "G20 family"
+  }
+]

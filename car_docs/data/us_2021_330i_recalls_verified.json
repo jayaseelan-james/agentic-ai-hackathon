@@ -1,0 +1,79 @@
+[
+  {
+    "campaign_id": "21V554000",
+    "model_year": "2021",
+    "component": "SEAT BELTS",
+    "short_original_summary": "Passenger belt retractor can stop locking too early",
+    "advice_note": "Safety-critical; check exact VIN",
+    "reported_date": "2021-07-21",
+    "source_id": "S025",
+    "market": "US",
+    "vin_verified": false
+  },
+  {
+    "campaign_id": "21V096000",
+    "model_year": "2021",
+    "component": "BACK OVER PREVENTION: CAMERA",
+    "short_original_summary": "Rearview image may be partially unavailable or obscured",
+    "advice_note": "Contact authorized service if affected",
+    "reported_date": "2021-02-19",
+    "source_id": "S025",
+    "market": "US",
+    "vin_verified": false
+  },
+  {
+    "campaign_id": "21V298000",
+    "model_year": "2021",
+    "component": "SEAT BELTS: FRONT BUCKLE",
+    "short_original_summary": "Front belt buckle attachment bolt may not meet required tightening",
+    "advice_note": "Safety-critical; check exact VIN",
+    "reported_date": "2021-04-28",
+    "source_id": "S025",
+    "market": "US",
+    "vin_verified": false
+  },
+  {
+    "campaign_id": "23V211000",
+    "model_year": "2021",
+    "component": "SEATS",
+    "short_original_summary": "Seat frame weld issue may impair restraint",
+    "advice_note": "Safety-critical; check exact VIN",
+    "reported_date": "2023-03-29",
+    "source_id": "S025",
+    "market": "US",
+    "vin_verified": false
+  },
+  {
+    "campaign_id": "23V584000",
+    "model_year": "2021",
+    "component": "SEAT BELTS: WARNING SOFTWARE",
+    "short_original_summary": "Seat belt reminder chime may fail",
+    "advice_note": "Check software remedy and exact VIN",
+    "reported_date": "2023-08-16",
+    "source_id": "S025",
+    "market": "US",
+    "vin_verified": false
+  },
+  {
+    "campaign_id": "25V636000",
+    "model_year": "2021",
+    "component": "ELECTRICAL SYSTEM: STARTER RELAY",
+    "short_original_summary": "Starter relay may corrode and overheat; fire concern",
+    "advice_note": "Affected vehicles: official park-outside guidance until remedy",
+    "reported_date": "2025-09-23",
+    "source_id": "S025",
+    "market": "US",
+    "vin_verified": false
+  },
+  {
+    "campaign_id": "26V056000",
+    "model_year": "2021",
+    "component": "ELECTRICAL SYSTEM: STARTER",
+    "short_original_summary": "Internal starter wear may cause overheating; fire concern",
+    "advice_note": "Contact BMW for VIN applicability and remedy",
+    "reported_date": "2026-01-31",
+    "source_id": "S025",
+    "market": "US",
+    "vin_verified": false
+  }
+]

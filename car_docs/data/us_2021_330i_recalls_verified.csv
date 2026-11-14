@@ -1,0 +1,8 @@
+campaign_id,model_year,component,short_original_summary,advice_note,reported_date,source_id,market,vin_verified
+21V554000,2021,SEAT BELTS,Passenger belt retractor can stop locking too early,Safety-critical; check exact VIN,2021-07-21,S025,US,False
+21V096000,2021,BACK OVER PREVENTION: CAMERA,Rearview image may be partially unavailable or obscured,Contact authorized service if affected,2021-02-19,S025,US,False
+21V298000,2021,SEAT BELTS: FRONT BUCKLE,Front belt buckle attachment bolt may not meet required tightening,Safety-critical; check exact VIN,2021-04-28,S025,US,False
+23V211000,2021,SEATS,Seat frame weld issue may impair restraint,Safety-critical; check exact VIN,2023-03-29,S025,US,False
+23V584000,2021,SEAT BELTS: WARNING SOFTWARE,Seat belt reminder chime may fail,Check software remedy and exact VIN,2023-08-16,S025,US,False
+25V636000,2021,ELECTRICAL SYSTEM: STARTER RELAY,Starter relay may corrode and overheat; fire concern,Affected vehicles: official park-outside guidance until remedy,2025-09-23,S025,US,False
+26V056000,2021,ELECTRICAL SYSTEM: STARTER,Internal starter wear may cause overheating; fire concern,Contact BMW for VIN applicability and remedy,2026-01-31,S025,US,False
