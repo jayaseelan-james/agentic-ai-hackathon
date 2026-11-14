@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Car, ExternalLink } from 'lucide-react';
 import Markdown from 'react-markdown';
+import InvestigationDetails from './InvestigationDetails';
 import {customerError, type Message, type MechanicReport} from '../api';
 
 function annotated(message: Message) {
@@ -37,6 +38,7 @@ export default function MessageList({messages, onRetry, busy}: {messages: Messag
         {message.attachments.map(file => <div className="sent-media" key={file.id}>{file.kind === 'image' ? <a href={file.url} target="_blank" rel="noreferrer"><img src={file.url} alt={file.filename}/></a> : file.kind === 'audio' ? <audio src={file.url} controls/> : <video src={file.url} controls playsInline/>}<small>{file.filename}</small></div>)}
         {message.role === 'assistant' && <small>{message.provider === 'safety_rules' ? 'Professional assistance recommended' : 'Findings are unconfirmed'}</small>}
       </div>
+      {message.role === 'assistant' && <InvestigationDetails message={message}/>}
       {message.citations.length > 0 && <div className="sources"><strong>Sources</strong>{[...new Map(message.citations.map(source => [source.url, source])).values()].map((source, i) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{i + 1}. {source.title}<ExternalLink size={13}/></a>)}</div>}
       {message.search_suggestions.map((html, i) => <iframe key={i} className="search-suggestions" title={`Google Search suggestions ${i + 1}`} sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer" srcDoc={`<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https:; img-src https: data:; font-src https:"><base target="_blank">${html}`}/>)}
       {message.report && <Report report={message.report}/>}</div>

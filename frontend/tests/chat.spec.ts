@@ -60,7 +60,7 @@ test('vehicle details, processing, citations, tool activity, safety and new chat
   await page.getByRole('textbox',{name:'Message'}).fill('My tire warning is yellow');await page.getByRole('button',{name:'Send message'}).click();
   await expect(page.locator('.processing')).toBeVisible();
   await expect(page.locator('.sources')).toContainText('Official source');
-  await expect(page.locator('.activity')).toHaveCount(0);
+  await expect(page.locator('.activity')).toContainText('Searching the web');
   await expect(page.locator('.diagnostic-details, .demo-sensors')).toHaveCount(0);
   await expect(page.locator('.search-suggestions')).toHaveCount(1);
   await page.getByRole('textbox',{name:'Message'}).fill('My brake pedal feels soft brake');await page.getByRole('button',{name:'Send message'}).click();
