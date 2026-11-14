@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Mic, Video, X, Square, Circle, RotateCw } from 'lucide-react';
 import { formatTime } from '../api';
 
-export default function Recorder({ kind, onClose, onAttach }: {kind: 'audio' | 'video'; onClose: () => void; onAttach: (file: File) => void}) {
+export default function Recorder({ kind, onClose, onAttach, dictation = false }: {kind: 'audio' | 'video'; onClose: () => void; onAttach: (file: File) => void; dictation?: boolean}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -59,14 +59,16 @@ export default function Recorder({ kind, onClose, onAttach }: {kind: 'audio' | '
         const blob = new Blob(chunks, {type: mimeType});
         if (!blob.size || blob.size > 25_000_000) { setError('Recording was empty or exceeded 25 MB. Please try a shorter clip.'); setState('error'); return; }
         const extension = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
-        setFile(new File([blob], `${kind === 'audio' ? 'Voice-note' : 'Camera-video'}-${Date.now()}.${extension}`, {type: mimeType}));
+        const recording = new File([blob], `${kind === 'audio' ? 'Voice-note' : 'Camera-video'}-${Date.now()}.${extension}`, {type: mimeType});
+        if (dictation) { onAttach(recording); onClose(); return; }
+        setFile(recording);
         setUrl(URL.createObjectURL(blob)); setState('review');
       };
       next.start(250); setSeconds(0); setState('recording');
     } catch (e) { stopTracks(); setError(e instanceof Error ? e.message : 'Recording failed.'); setState('error'); }
   }
   return <dialog ref={dialog} className="recorder" onCancel={onClose} aria-labelledby="record-title">
-    <div className="sheet-handle"/><header><h2 id="record-title">{state === 'review' ? 'Review' : 'Record'} {kind === 'audio' ? 'audio' : 'video'}</h2><button aria-label="Close recorder" onClick={onClose}><X/></button></header>
+    <div className="sheet-handle"/><header><h2 id="record-title">{dictation ? 'Dictate message' : `${state === 'review' ? 'Review' : 'Record'} ${kind === 'audio' ? 'audio' : 'video'}`}</h2><button aria-label="Close recorder" onClick={onClose}><X/></button></header>
     <p className="record-help">Only record while safely parked.</p>
     {state === 'error' ? <p role="alert" className="error">{error}</p> : <>
       <div className={`record-preview ${kind}`}>
@@ -80,6 +82,6 @@ export default function Recorder({ kind, onClose, onAttach }: {kind: 'audio' | '
     <div className="record-actions"><button className="outline" onClick={onClose}>Cancel</button>
       {state === 'recording' ? <button className="stop-action" onClick={() => recorder.current?.stop()}><span><Square fill="currentColor"/></span>Stop recording</button> : state === 'review' ? <button className="primary" onClick={() => { if (file) onAttach(file); onClose(); }}>Use {kind === 'audio' ? 'audio' : 'clip'}</button> : <button className="primary" disabled={state !== 'ready'} onClick={start}><Circle size={18}/>Start recording</button>}
       {kind === 'video' && state !== 'review' && <button className="outline flip" disabled={state !== 'ready'} onClick={() => setFacing(v => v === 'environment' ? 'user' : 'environment')}><RotateCw size={22}/>Flip</button>}
-    </div><p className="review-hint">Review your {kind === 'audio' ? 'audio' : 'clip'} before sending.</p>
+    </div><p className="review-hint">{dictation ? 'Google transcribes after you stop. Review and edit the text before sending.' : `Review your ${kind === 'audio' ? 'audio' : 'clip'} before sending.`}</p>
   </dialog>;
 }

@@ -15,8 +15,10 @@ export type Incident = { id: string; mode?: ChatMode; title: string; vehicle: Ve
 export type Health = { configured: boolean; verified: boolean; model: string; provider: string; internet_blocked?: boolean; web_search_allowed?: boolean; api_connection_allowed?: boolean };
 export class ApiError extends Error { constructor(message:string,public status:number){super(message);this.name="ApiError";} }
 export const customerError = (message:string) => /GEMINI_API_KEY|credentials|model access|GEMINI_MODEL|billing|quota/i.test(message) ? "The assistant is temporarily unavailable. Please retry later." : message;
-export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api${path}`, { ...init, signal: AbortSignal.timeout(60000) });
+export type SpeechResult = { text: string; audio_url: string; mime_type: string };
+export async function request<T>(path: string, init?: RequestInit, timeout = 60000): Promise<T> {
+  const signal = init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(timeout)]) : AbortSignal.timeout(timeout);
+  const response = await fetch(`/api${path}`, { ...init, signal });
   if (!response.ok) { const body = await response.json().catch(() => null); throw new ApiError(typeof body?.detail === 'string' ? body.detail : 'Request failed. Please try again.', response.status); }
   return response.json();
 }

@@ -16,6 +16,7 @@ from .schemas import Attachment, CreateIncident, Event, Incident, Message, Vehic
 from .sensors import Simulation, EnableSimulation, ConnectivitySimulation, SensorChange, change_sensor, describe, reset, touch
 from .tools import mechanic_report
 from . import simulator
+from . import speech
 from .diagnostics import finish, ingest_user, set_context
 
 MAX_FILE = 25_000_000
@@ -34,6 +35,7 @@ verified_model: str | None = None
 @asynccontextmanager
 async def lifespan(app):
     yield
+    await speech.close()
     for task in list(tasks):
         task.cancel()
     await asyncio.gather(*tasks, return_exceptions=True)
@@ -292,6 +294,50 @@ def attachment(attachment_id: str):
         raise HTTPException(404, 'Attachment no longer available.')
     data, mime = media[attachment_id]
     return Response(data, media_type=mime, headers={'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'})
+
+
+def speech_error(error):
+    if isinstance(error, speech.SpeechError):
+        return HTTPException(422, str(error))
+    if isinstance(error, (TimeoutError, asyncio.TimeoutError)):
+        return HTTPException(504, 'Speech request timed out. Your text is preserved; retry speech.')
+    return HTTPException(502, 'Google speech is unavailable. Check backend speech model access and quota, then retry.')
+
+
+@app.post('/api/speech/transcriptions')
+async def transcribe_speech(file: UploadFile = File()):
+    try:
+        mime = (file.content_type or '').split(';')[0]
+        if mime not in ALLOWED or not mime.startswith('audio/'):
+            raise HTTPException(415, 'Choose an audio recording for dictation.')
+        data = await file.read(MAX_FILE + 1)
+        if not data or len(data) > MAX_FILE:
+            raise HTTPException(413, 'Dictation must be non-empty and no larger than 25 MB.')
+        try:
+            async with asyncio.timeout(120):
+                return {'text': await speech.transcribe(data, mime)}
+        except ValueError as error:
+            if str(error).startswith(('Media cannot', 'Processed media')):
+                raise HTTPException(422, str(error)) from None
+            raise speech_error(error) from None
+        except Exception as error:
+            raise speech_error(error) from None
+    finally:
+        await file.close()
+
+
+@app.post('/api/incidents/{incident_id}/messages/{message_id}/speech')
+async def speak_message(incident_id: str, message_id: str):
+    incident = get_incident(incident_id)
+    message = next((m for m in incident.messages if m.id == message_id and m.role == 'assistant'), None)
+    if not message:
+        raise HTTPException(404, 'Assistant message not found.')
+    if message.state != 'complete' or not message.text.strip():
+        raise HTTPException(409, 'Speech is available after an answer completes.')
+    try:
+        return await speech.spoken_answer(message, media)
+    except Exception as error:
+        raise speech_error(error) from None
 
 
 @app.get('/api/simulator')

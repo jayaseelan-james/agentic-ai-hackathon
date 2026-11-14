@@ -3,6 +3,7 @@ import { Car, Plus, Menu, X, TriangleAlert, ScanLine } from 'lucide-react';
 import { customerError, request, vehicleName, type ChatMode, type Health, type Incident } from './api';
 import Composer from './components/Composer';
 import MessageList, { BMW_PROMPTS } from './components/MessageList';
+import { useSpokenAnswers } from './useSpokenAnswers';
 
 const BMW_DEFAULT_VEHICLE = { make: 'BMW', model: '330i (G20)', year: null };
 const SENSOR_CHECK_PROMPT = 'Check what’s wrong with my car using the available sensor readings and recorded history. Summarize what needs attention and the next safe action.';
@@ -29,10 +30,11 @@ export default function App({ initialMode = 'general' }: { initialMode?: ChatMod
   const modeChats = chats.filter(c => chatMode(c) === mode);
   const selected = (selectedByMode[mode] && modeChats.some(c => c.id === selectedByMode[mode])) ? selectedByMode[mode] : (modeChats[0]?.id || '');
   const current = modeChats.find(c => c.id === selected);
+  const speech = useSpokenAnswers(current);
   const busy = submitting || !!current?.messages.some(m => m.state === 'processing');
   const processingIds = chats.filter(c => c.messages.some(m => m.state === 'processing')).map(c => c.id).join(',');
   function selectChat(id: string, targetMode: ChatMode = mode) { setSelectedByMode(prev => ({ ...prev, [targetMode]: id })); }
-  function update(chat: Incident) { setChats(list => list.map(c => c.id === chat.id ? chat : c)); }
+  function update(chat: Incident, submitted = false) { if (submitted) speech.markSubmitted(chat); setChats(list => list.map(c => c.id === chat.id ? chat : c)); }
   async function load() {
     setLoading(true); setError('');
     try {
@@ -86,6 +88,7 @@ export default function App({ initialMode = 'general' }: { initialMode?: ChatMod
   }
   async function newChat() {
     if (sending.current) return;
+    speech.stop();
     sending.current = true; setSubmitting(true);
     const body = isBmw ? JSON.stringify({ mode: 'bmw_g20', vehicle: BMW_DEFAULT_VEHICLE }) : '{}';
     try {
@@ -96,17 +99,19 @@ export default function App({ initialMode = 'general' }: { initialMode?: ChatMod
   }
   async function send(text: string, files: File[], sensorCheck = false) {
     if (!current || sending.current || busy) return false;
+    speech.stop();
     sending.current = true; setSubmitting(true); setError('');
     const signature = JSON.stringify([current.id, text, sensorCheck, files.map(f => [f.name, f.size, f.lastModified])]);
     if (submission.current?.signature !== signature) submission.current = {signature, id: crypto.randomUUID()};
     const form = new FormData(); form.append('request_id', submission.current.id); form.append('text', text); files.forEach(f => form.append('files', f));
     if (sensorCheck) form.append('sensor_check', 'true');
-    try { update(await request<Incident>(`/incidents/${current.id}/messages`, {method: 'POST', body: form})); submission.current = null; return true; }
+    try { update(await request<Incident>(`/incidents/${current.id}/messages`, {method: 'POST', body: form}), true); submission.current = null; return true; }
     catch (e) { setError(`${customerError((e as Error).message)} Your draft is preserved.`); return false; }
     finally { sending.current = false; setSubmitting(false); }
   }
   async function sendQuickPrompt(prompt: string, sensorCheck = false) {
     if (sending.current || busy) return;
+    speech.stop();
     if (current) { void send(prompt, [], sensorCheck); return; }
     sending.current = true; setSubmitting(true); setError('');
     const createBody = isBmw ? JSON.stringify({ mode: 'bmw_g20', vehicle: BMW_DEFAULT_VEHICLE }) : '{}';
@@ -117,6 +122,7 @@ export default function App({ initialMode = 'general' }: { initialMode?: ChatMod
       const form = new FormData(); form.append('request_id', submission.current.id); form.append('text', prompt);
       if (sensorCheck) form.append('sensor_check', 'true');
       const updated = await request<Incident>(`/incidents/${chat.id}/messages`, {method: 'POST', body: form});
+      speech.markSubmitted(updated);
       submission.current = null;
       setChats(c => c.map(item => item.id === updated.id ? updated : item));
     } catch (e) { setError(customerError((e as Error).message)); }
@@ -124,8 +130,9 @@ export default function App({ initialMode = 'general' }: { initialMode?: ChatMod
   }
   async function retry(id: string) {
     if (!current || busy || sending.current) return;
+    speech.stop();
     sending.current = true; setSubmitting(true); setError('');
-    try { update(await request<Incident>(`/incidents/${current.id}/messages/${id}/retry`, {method: 'POST'})); }
+    try { update(await request<Incident>(`/incidents/${current.id}/messages/${id}/retry`, {method: 'POST'}), true); }
     catch (e) { setError(customerError((e as Error).message)); }
     finally { sending.current = false; setSubmitting(false); }
   }
@@ -141,7 +148,8 @@ export default function App({ initialMode = 'general' }: { initialMode?: ChatMod
       {health?.internet_blocked && <div className="connectivity-notice" role="status"><strong>Remote breakdown mode · Gemma 4 26B</strong><span>Web access blocked · AI connection remains active</span></div>}
       {current?.safety && <div className="safety" role="alert"><TriangleAlert/><div><strong>Do not continue driving</strong><p>{current.safety}</p></div></div>}
       {error && <div className="error app-error" role="alert">{error}{processingIds ? <button className="outline" onClick={() => {setError(''); setPollEpoch(v => v + 1);}}>Resume status</button> : !current && <button className="outline" onClick={() => void load()}>Retry connection</button>}</div>}
-      {loading ? <div className="empty" role="status">Connecting to API…</div> : current ? <><MessageList messages={current.messages} onRetry={id => void retry(id)} busy={busy} mode={mode} onQuickPrompt={prompt => void sendQuickPrompt(prompt)}/><Composer key={current.id} onSend={send} busy={busy}/></> : !error && <div className="empty"><Car size={40}/><h2>{isBmw ? 'What’s happening with your BMW 330i (G20)?' : 'What’s happening with your car?'}</h2><p>{isBmw ? 'Investigate B46TU/B48TU petrol symptoms, Check Control & iDrive TPM warnings, recalls, and shared sensor readings.' : 'Start a conversation to share text, photos, audio or video with the assistant.'}</p><button className="primary" onClick={() => void newChat()}>Start a conversation</button>{isBmw && <div className="quick-prompts" aria-label="BMW 330i G20 starter examples">{BMW_PROMPTS.map(prompt => <button key={prompt} type="button" className="outline quick-prompt" disabled={busy} onClick={() => void sendQuickPrompt(prompt)}>{prompt}</button>)}</div>}</div>}
+      <div className="voice-preference"><button type="button" className="outline" aria-pressed={!speech.muted} onClick={speech.toggleMute}>{speech.muted ? 'Enable spoken answers' : 'Mute spoken answers'}</button><small>Short spoken summaries · Google AI voice</small></div>
+      {loading ? <div className="empty" role="status">Connecting to API…</div> : current ? <><MessageList messages={current.messages} onRetry={id => void retry(id)} busy={busy} mode={mode} onQuickPrompt={prompt => void sendQuickPrompt(prompt)} speechStatuses={speech.statuses} onPlay={id => void speech.play(id)} onStop={speech.stop}/><Composer key={current.id} onSend={send} busy={busy} onCapture={speech.stop}/></> : !error && <div className="empty"><Car size={40}/><h2>{isBmw ? 'What’s happening with your BMW 330i (G20)?' : 'What’s happening with your car?'}</h2><p>{isBmw ? 'Investigate B46TU/B48TU petrol symptoms, Check Control & iDrive TPM warnings, recalls, and shared sensor readings.' : 'Start a conversation to share text, photos, audio or video with the assistant.'}</p><button className="primary" onClick={() => void newChat()}>Start a conversation</button>{isBmw && <div className="quick-prompts" aria-label="BMW 330i G20 starter examples">{BMW_PROMPTS.map(prompt => <button key={prompt} type="button" className="outline quick-prompt" disabled={busy} onClick={() => void sendQuickPrompt(prompt)}>{prompt}</button>)}</div>}</div>}
     </main>
   </div>;
 }

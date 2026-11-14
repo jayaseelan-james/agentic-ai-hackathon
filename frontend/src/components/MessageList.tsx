@@ -3,6 +3,7 @@ import { Car } from 'lucide-react';
 import Markdown from 'react-markdown';
 import InvestigationDetails from './InvestigationDetails';
 import {customerError, type ChatMode, type Message, type MechanicReport} from '../api';
+import type { SpeechStatus } from '../useSpokenAnswers';
 
 export const BMW_PROMPTS = [
   'My yellow TPMS warning is showing on iDrive.',
@@ -26,7 +27,7 @@ function Report({report}: {report: MechanicReport}) {
   return <details className="report"><summary>Mechanic handoff</summary><p>Reported symptoms</p><ul>{report.reported_symptoms.map((s, i) => <li key={i}>{s}</li>)}</ul>{!!report.media_observations?.length&&<><p>Media observations (unconfirmed)</p><ul>{report.media_observations.map(e=><li key={e.id}>{e.quote}{e.value===null?" (uncertain)":""}</li>)}</ul></>}<small>{report.uncertainties.join(' ')}</small>{report.unresolved_questions?.map(question => <p key={question.id}>Unresolved: {question.text}</p>)}<button className="outline" onClick={async () => { try { await navigator.clipboard.writeText(text); setFeedback('Report copied'); } catch { setFeedback('Copy unavailable. Select the report text to copy.'); } }}>Copy report</button><span role="status">{feedback}</span></details>;
 }
 
-export default function MessageList({messages, onRetry, busy, mode = 'general', onQuickPrompt}: {messages: Message[]; onRetry: (id: string) => void; busy: boolean; mode?: ChatMode; onQuickPrompt?: (prompt: string) => void}) {
+export default function MessageList({messages, onRetry, busy, mode = 'general', onQuickPrompt, speechStatuses, onPlay, onStop}: {messages: Message[]; onRetry: (id: string) => void; busy: boolean; mode?: ChatMode; onQuickPrompt?: (prompt: string) => void; speechStatuses: Record<string, SpeechStatus>; onPlay: (id: string) => void; onStop: () => void}) {
   const isBmw = mode === 'bmw_g20';
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -47,6 +48,14 @@ export default function MessageList({messages, onRetry, busy, mode = 'general', 
         {message.role === 'assistant' && message.provider === 'gemma' && <small className="model-attribution">Gemma 4 26B · Web access blocked</small>}
         {message.role === 'assistant' && message.provider === 'safety_rules' && message.state !== 'processing' && <small>Professional assistance recommended</small>}
       </div>
+      {message.role === 'assistant' && message.state === 'complete' && message.text && <div className="speech-controls">
+        {speechStatuses[message.id]?.stage === 'loading' || speechStatuses[message.id]?.stage === 'playing'
+          ? <button className="outline" onClick={onStop}>{speechStatuses[message.id].stage === 'loading' ? 'Cancel speech' : 'Stop speaking'}</button>
+          : <button className="outline" onClick={() => onPlay(message.id)}>{speechStatuses[message.id]?.stage === 'error' ? 'Retry speech' : 'Play answer'}</button>}
+        {speechStatuses[message.id]?.stage === 'loading' && <span role="status">Preparing speech…</span>}
+        {speechStatuses[message.id]?.error && <span role="status">{speechStatuses[message.id].error}</span>}
+        {speechStatuses[message.id]?.text && <details><summary>Spoken summary</summary><p>{speechStatuses[message.id].text}</p></details>}
+      </div>}
       {message.role === 'assistant' && <InvestigationDetails message={message}/>}
       {message.report && <Report report={message.report}/>}</div>
     </article>)}<div ref={end}/>

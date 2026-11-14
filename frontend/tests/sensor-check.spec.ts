@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
 
+// Speech has separate coverage; these fixtures deliberately omit speech routes.
+test.beforeEach(async ({context}) => {
+  await context.addInitScript(() => { try { localStorage.setItem('autosage-speech-muted', 'true'); } catch { /* about:blank has no storage origin. */ } });
+});
+
 const label = 'Check what’s wrong with my car';
 
 for (const mode of ['general', 'bmw_g20']) {

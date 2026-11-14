@@ -78,7 +78,9 @@ test('image upload and real browser audio/video recording, review and playback',
   await openChat(page);
   await page.locator('input[type=file]').setInputFiles({name:'dashboard.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a7i8AAAAASUVORK5CYII=','base64')});
   for(const kind of ['Voice','Camera']) {
-    await page.getByRole('button',{name:kind,exact:true}).click();await page.getByRole('button',{name:'Start recording'}).click();await page.waitForTimeout(1100);await page.getByRole('button',{name:'Stop recording'}).click();
+    if(kind==='Voice') {await page.getByRole('button',{name:'Attach',exact:true}).click();await page.getByRole('button',{name:'Record audio',exact:true}).click();}
+    else await page.getByRole('button',{name:kind,exact:true}).click();
+    await page.getByRole('button',{name:'Start recording'}).click();await page.waitForTimeout(1100);await page.getByRole('button',{name:'Stop recording'}).click();
     await expect(page.getByText('Recording complete · devices are off')).toBeVisible();await page.getByRole('button',{name:kind==='Voice'?'Use audio':'Use clip',exact:true}).click();
   }
   await page.getByRole('button',{name:'Send message'}).click();

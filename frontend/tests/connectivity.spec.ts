@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
 
+// Speech has separate coverage; keep these fixtures focused on connectivity.
+test.beforeEach(async ({context}) => {
+  await context.addInitScript(() => { try { localStorage.setItem('autosage-speech-muted', 'true'); } catch { /* about:blank has no storage origin. */ } });
+});
+
 for (const width of [1280, 390]) {
   test(`remote breakdown toggle selects hosted Gemma and blocks web access at ${width}px`, async ({ page, context }) => {
     await page.setViewportSize({ width, height: 900 });
