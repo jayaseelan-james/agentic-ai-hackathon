@@ -4,9 +4,9 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-Domain = Literal['tire', 'brake']
+Domain = Literal['tire', 'brake', 'cooling', 'starting_charging', 'engine_running']
 Context = Literal['real', 'demo', 'unspecified']
-Symptom = Literal['yellow_tpms_warning', 'low_wheel_pressure', 'soft_brake_pedal', 'persistent_red_warning']
+Symptom = Literal['yellow_tpms_warning', 'low_wheel_pressure', 'soft_brake_pedal', 'persistent_red_warning', 'high_temperature_warning', 'coolant_loss', 'overheating_stationary', 'slow_cranking', 'clicking_no_crank', 'battery_warning_running', 'rough_idle', 'hesitation', 'check_engine_warning']
 
 
 class Evidence(BaseModel):
@@ -14,7 +14,11 @@ class Evidence(BaseModel):
     incident_id: str
     symptom: Symptom
     value: bool | None
-    source: Literal['user_reported', 'simulated_sensor']
+    source: Literal['user_reported', 'simulated_sensor', 'media_observed']
+    attachment_id: str | None = None
+    timestamp_seconds: float | None = None
+    observation_kind: Literal['text', 'spoken', 'visible'] | None = None
+    uncertain: bool = False
     reference: str
     quote: str = ''
     timestamp: str

@@ -4,7 +4,7 @@ import hashlib
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from .agent import investigate
@@ -12,9 +12,10 @@ from .config import settings
 from .provider import GeminiProvider, public_error
 from .safety import SAFETY, critical
 from .schemas import Attachment, CreateIncident, Event, Incident, Message, Vehicle, uid
-from .sensors import EnableSimulation, SensorChange, change_sensor, describe, reset, touch
+from .sensors import Simulation, EnableSimulation, SensorChange, change_sensor, describe, reset, touch
 from .tools import mechanic_report
-from .diagnostics import finish, ingest_user
+from . import simulator
+from .diagnostics import finish, ingest_user, set_context
 
 MAX_FILE = 25_000_000
 MAX_TOTAL = 50_000_000
@@ -24,6 +25,8 @@ media: dict[str, tuple[bytes, str]] = {}
 requests: dict[tuple[str, str], str] = {}
 locks: dict[str, asyncio.Lock] = {}
 tasks: set[asyncio.Task] = set()
+shared_simulation = simulator.state
+simulator_lock = simulator.lock
 verified_model: str | None = None
 
 
@@ -81,6 +84,10 @@ async def run(incident, user, answer):
         # Local results remain available; provider failure and retry stay visible.
         finish(incident, answer)
     finally:
+        if answer.state == 'failed':
+            for analysis in answer.media_analysis:
+                if analysis['status'] != 'analyzed':
+                    analysis['status'] = 'failed'
         for event in answer.activity:
             if event.status == 'running':
                 event.status = 'failed'
@@ -99,6 +106,14 @@ def enqueue(incident, user, answer):
 
 
 def complete_or_enqueue(incident, user, answer):
+    if answer.simulator_snapshot is None:
+        incident.sensor_simulation = shared_simulation.model_copy(deep=True)
+        sim = incident.sensor_simulation
+        answer.simulator_snapshot = {'enabled': sim.enabled, 'revision': sim.revision, 'fixture_id': sim.fixture_id, 'snapshot_time': sim.snapshot_time}
+    if incident.sensor_simulation.enabled:
+        set_context(incident, 'demo')
+    elif incident.diagnostic_state.context == 'demo':
+        set_context(incident, 'real')
     ingest_user(incident, user)
     if incident.safety:
         answer.state = 'complete'
@@ -155,45 +170,26 @@ def report(incident_id: str):
     return mechanic_report(get_incident(incident_id))
 
 
+# Compatibility routes intentionally address the global simulator, not per-chat controls.
 @app.get('/api/incidents/{incident_id}/sensors')
 async def sensor_state(incident_id: str):
-    return describe(get_incident(incident_id).sensor_simulation)
-
+    get_incident(incident_id)
+    return simulator.describe_state()
 
 @app.patch('/api/incidents/{incident_id}/sensors')
 async def enable_sensors(incident_id: str, body: EnableSimulation):
-    incident = get_incident(incident_id)
-    async with locks[incident_id]:
-        if processing(incident):
-            raise HTTPException(409, 'Wait for the current investigation before changing demo sensors.')
-        sim = incident.sensor_simulation
-        if sim.enabled != body.enabled:
-            sim.enabled = body.enabled
-            touch(sim)
-        return describe(sim)
-
+    get_incident(incident_id)
+    return await _enable(body, None, False)
 
 @app.post('/api/incidents/{incident_id}/sensors/reset')
 async def reset_sensors(incident_id: str):
-    incident = get_incident(incident_id)
-    async with locks[incident_id]:
-        if processing(incident):
-            raise HTTPException(409, 'Wait for the current investigation before changing demo sensors.')
-        reset(incident.sensor_simulation)
-        return describe(incident.sensor_simulation)
-
+    get_incident(incident_id)
+    return await _reset(None, False)
 
 @app.patch('/api/incidents/{incident_id}/sensors/{sensor_name}')
 async def update_sensor(incident_id: str, sensor_name: str, body: SensorChange):
-    incident = get_incident(incident_id)
-    async with locks[incident_id]:
-        if processing(incident):
-            raise HTTPException(409, 'Wait for the current investigation before changing demo sensors.')
-        try:
-            change_sensor(incident.sensor_simulation, sensor_name, body)
-        except ValueError as error:
-            raise HTTPException(422, str(error)) from None
-        return describe(incident.sensor_simulation)
+    get_incident(incident_id)
+    return await _update(sensor_name, body, None, False)
 
 
 @app.post('/api/incidents/{incident_id}/messages', response_model=Incident, status_code=202)
@@ -261,6 +257,7 @@ async def retry(incident_id: str, message_id: str):
         user = next(m for m in incident.messages if m.id == answer.reply_to)
         answer.state, answer.error = 'processing', None
         answer.text, answer.activity, answer.citations, answer.search_suggestions, answer.report = '', [], [], [], None
+        answer.media_analysis = []
         answer.diagnostic_inference, answer.follow_up_question = [], None
         complete_or_enqueue(incident, user, answer)
     return incident
@@ -272,3 +269,58 @@ def attachment(attachment_id: str):
         raise HTTPException(404, 'Attachment no longer available.')
     data, mime = media[attachment_id]
     return Response(data, media_type=mime, headers={'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'})
+
+
+@app.get('/api/simulator')
+async def shared_state():
+    return simulator.describe_state()
+
+async def _enable(body, if_match, required=True):
+    async with simulator_lock:
+        simulator.check_revision(if_match, required)
+        if shared_simulation.enabled != body.enabled:
+            shared_simulation.enabled = body.enabled
+            touch(shared_simulation)
+        return simulator.describe_state()
+
+async def _update(name, body, if_match, required=True):
+    async with simulator_lock:
+        simulator.check_revision(if_match, required)
+        try:
+            change_sensor(shared_simulation, name, body)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from None
+        return simulator.describe_state()
+
+async def _reset(if_match, required=True):
+    async with simulator_lock:
+        simulator.check_revision(if_match, required)
+        reset(shared_simulation)
+        return simulator.describe_state()
+
+@app.post('/api/simulator/scenario')
+async def shared_scenario(body: simulator.Scenario, if_match: str | None = Header(default=None)):
+    async with simulator_lock:
+        simulator.check_revision(if_match)
+        simulator.apply_scenario(body.scenario)
+        return simulator.describe_state()
+
+
+@app.patch('/api/simulator')
+async def shared_enable(body: EnableSimulation, if_match: str | None = Header(default=None)):
+    return await _enable(body, if_match)
+
+@app.patch('/api/simulator/sensors/{name}')
+async def shared_update(name: str, body: SensorChange, if_match: str | None = Header(default=None)):
+    return await _update(name, body, if_match)
+
+@app.post('/api/simulator/reset')
+async def shared_reset(if_match: str | None = Header(default=None)):
+    return await _reset(if_match)
+
+@app.get('/api/incidents/{incident_id}/inspection')
+def inspection(incident_id: str):
+    incident = get_incident(incident_id)
+    return {'incident': incident.model_dump(), 'evidence': [item.model_dump() for item in incident.diagnostic_state.evidence],
+            'diagnostic_state': incident.diagnostic_state.model_dump(exclude={'cache'}),
+            'report': mechanic_report(incident), 'provider': health()}

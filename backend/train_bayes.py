@@ -8,14 +8,18 @@ from pathlib import Path
 
 from .app.bayes import DATA, SYMPTOMS, posterior
 
-GENERATOR_VERSION = 'autosage-synthetic-v1'
-MODEL_VERSION = 'autosage-trained-v1'
+GENERATOR_VERSION = 'autosage-synthetic-v2'
+MODEL_VERSION = 'autosage-trained-v2'
 # Hand-authored toy generator, PROJECT_PLAN.md section 6.2. These are not automotive statistics.
 GENERATORS = {
     'tire': {'tire_pressure_loss': (0.35, 0.90, 0.80), 'tpms_sensor_issue': (0.20, 0.80, 0.15),
              'other_or_unmodeled': (0.45, 0.10, 0.20)},
     'brake': {'brake_hydraulic_concern': (0.15, 0.90, 0.85), 'brake_indicator_issue': (0.25, 0.08, 0.90),
               'other_or_unmodeled': (0.60, 0.03, 0.05)},
+    # Additional hand-authored synthetic assumptions, not measured automotive rates.
+    'cooling': {'coolant_loss_concern': (.30,.85,.90,.40), 'coolant_circulation_problem': (.25,.90,.15,.60), 'cooling_fan_control_issue': (.20,.80,.10,.90), 'other_or_unmodeled': (.25,.10,.10,.15)},
+    'starting_charging': {'low_battery_charge': (.35,.90,.65,.15), 'starter_circuit_issue': (.20,.15,.90,.05), 'charging_system_issue': (.20,.60,.35,.90), 'other_or_unmodeled': (.25,.10,.10,.10)},
+    'engine_running': {'ignition_misfire_concern': (.30,.90,.65,.85), 'air_fuel_delivery_concern': (.25,.60,.90,.60), 'engine_sensor_control_concern': (.20,.35,.40,.90), 'other_or_unmodeled': (.25,.10,.15,.10)},
 }
 
 

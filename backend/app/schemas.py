@@ -68,6 +68,8 @@ class Message(BaseModel):
     report: dict | None = None
     diagnostic_inference: list[Inference] = Field(default_factory=list)
     follow_up_question: Question | None = None
+    simulator_snapshot: dict | None = None
+    media_analysis: list[dict] = Field(default_factory=list)
 
 
 class Incident(BaseModel):
@@ -78,6 +80,7 @@ class Incident(BaseModel):
     safety: str | None = None
     sensor_simulation: Simulation = Field(default_factory=Simulation, exclude=True)
     diagnostic_state: DiagnosticState = Field(default_factory=DiagnosticState, exclude=True)
+    analyzed_attachment_ids: set[str] = Field(default_factory=set, exclude=True)
 
 
 class CreateIncident(BaseModel):

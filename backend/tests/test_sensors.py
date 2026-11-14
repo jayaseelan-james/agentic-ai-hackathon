@@ -37,9 +37,12 @@ def test_stable_current_history_and_disabled_boundary():
     assert query(incident, 'read_sensor_history')['history'][TIRE]['samples'][-1]['value'] == before['readings'][TIRE]['value'] == 2.3
     assert query(incident, 'read_sensor_history')['history'] == query(incident, 'read_sensor_history')['history']
     incident.sensor_simulation.enabled = False
-    assert query(incident)['readings'] == {}
-    assert query(incident, 'read_sensor_history')['history'] == {}
-    assert dispatch('list_available_sensors', {}, incident)['available'] == []
+    with pytest.raises(ValueError, match='disabled'):
+        query(incident)
+    with pytest.raises(ValueError, match='disabled'):
+        query(incident, 'read_sensor_history')
+    with pytest.raises(ValueError, match='disabled'):
+        dispatch('list_available_sensors', {}, incident)
     assert dispatch('get_vehicle_profile', {}, incident)['vehicle']['make'] == 'User make'
 
 
@@ -124,7 +127,8 @@ def test_validation_unknown_channels_partial_reads_and_no_cross_chat_access():
     result = dispatch('read_vehicle_sensors', {'sensor_names': ['tpms_per_wheel_pressure_bar', 'brake_fluid_pressure']}, incident)
     assert len(result['readings']) == 4 and result['status'] == 'partial'
     assert result['unavailable'] == ['brake_fluid_pressure']
-    assert not query(Incident())['readings']
+    with pytest.raises(ValueError, match='disabled'):
+        query(Incident())
     for args in [{'sensor_names': []}, {'sensor_names': [TIRE], 'incident_id': 'other'},
                  {'sensor_names': [TIRE], 'max_points': 1}, {'sensor_names': [TIRE], 'lookback_minutes': True}]:
         with pytest.raises(ValueError):
@@ -169,7 +173,7 @@ def client(monkeypatch):
         yield client, fake
 
 
-def test_sensor_api_isolation_refresh_and_busy_rejection(client):
+def test_sensor_api_shared_refresh_and_snapshot_boundary(client):
     client, fake = client
     id = client.post('/api/incidents', json={}).json()['id']
     other = client.post('/api/incidents', json={}).json()['id']
@@ -180,12 +184,13 @@ def test_sensor_api_isolation_refresh_and_busy_rejection(client):
     result = client.patch(f'{base}/{TIRE}', json={'kind': 'preset', 'preset': 'tire_slow_loss'})
     assert result.status_code == 200
     assert client.get(base).json()['channels'][TIRE]['value'] == 1.8
-    assert client.get(f'/api/incidents/{other}/sensors').json()['channels'][TIRE]['value'] == 2.3
+    assert client.get(f'/api/incidents/{other}/sensors').json()['channels'][TIRE]['value'] == 1.8
     assert client.get(f'/api/incidents/{id}').json()['messages'] == [] and not fake.inputs
+    main.incidents[id].sensor_simulation = main.shared_simulation.model_copy(deep=True)
     main.incidents[id].messages.append(Message(role='assistant', state='processing'))
-    for method, path, payload in [('patch', base, {'enabled': False}), ('post', f'{base}/reset', None),
-                                   ('patch', f'{base}/{TIRE}', {'kind': 'restore'})]:
-        assert getattr(client, method)(path, **({'json': payload} if payload else {})).status_code == 409
+    assert client.patch(f'{base}/{TIRE}', json={'kind':'value','value':2.1}).status_code == 200
+    assert main.incidents[id].sensor_simulation.channels[TIRE].value == 1.8
+    assert client.get(f'/api/incidents/{other}/sensors').json()['channels'][TIRE]['value'] == 2.1
     main.incidents[id].messages[-1].state = 'complete'
     assert client.patch(f'{base}/unknown', json={'kind': 'restore'}).status_code == 422
     assert client.patch(f'{base}/{TIRE}', json={'kind': 'value', 'value': -1}).status_code == 422

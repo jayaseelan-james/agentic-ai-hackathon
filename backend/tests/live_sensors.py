@@ -29,7 +29,7 @@ async def run():
     incident.sensor_simulation.enabled = True
     await turn(incident, 'I am safely parked. Investigate the current status of the fictional demo tire sensors. Read the simulated telemetry; keep your answer brief.', {'list_available_sensors', 'read_vehicle_sensors'})
     change_sensor(incident.sensor_simulation, 'tpms_rear_left_bar', SensorChange(kind='preset', preset='tire_slow_loss'))
-    answer = await turn(incident, 'The demo tire warning is recurring and rear-left pressure seems to have gradually decreased. Investigate current readings and history, choose a suitable history window, compare the trend, and explain what is observed versus uncertain. This is fictional demo telemetry, not my real vehicle.', {'read_vehicle_sensors', 'read_sensor_history'})
+    answer = await turn(incident, 'The demo tire warning is recurring and rear-left pressure seems to have gradually decreased. Investigate current readings and history, call classify_diagnosis for the tire domain, and use Google Search to verify official tire-warning guidance with citations. Compare the trend and explain what is observed versus uncertain. This is fictional demo telemetry, not my real vehicle.', {'read_vehicle_sensors', 'read_sensor_history', 'classify_diagnosis', 'google_search'})
     assert any(event.result and event.result.get('revision') == 1 for event in answer.activity if event.tool == 'read_sensor_history')
     print('Live stable baseline and gradual-loss investigation passed.', flush=True)
 

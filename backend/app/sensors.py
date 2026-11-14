@@ -17,6 +17,19 @@ CATALOG = {
     'engine_rpm': ('Engine RPM', 'RPM', 0, 2, 0, 20000),
     'coolant_temp_c': ('Coolant temperature', '°C', 22, 10, -50, 200),
 }
+CATALOG.update({
+ 'brake_fluid_pct': ('Brake-fluid level', '%', None, 1440, 0, 100),
+ 'brake_pressure_bar': ('Brake pressure', 'bar', None, 10, 0, 300),
+ 'coolant_level_pct': ('Coolant level', '%', None, 1440, 0, 100),
+ 'fan_rpm': ('Cooling fan RPM', 'RPM', None, 10, 0, 20000),
+ 'vehicle_speed_kmh': ('Vehicle speed', 'km/h', None, 10, 0, 300),
+ 'battery_voltage_v': ('Battery voltage', 'V', None, 1440, 0, 30),
+ 'cranking_rpm': ('Cranking RPM', 'RPM', None, 2, 0, 3000),
+ 'starter_current_a': ('Starter current', 'A', None, 2, 0, 2000),
+ 'misfire_count': ('Misfires in 60 seconds', 'count', None, 2, 0, 100000),
+ 'fuel_pressure_kpa': ('Fuel pressure', 'kPa', None, 10, 0, 30000),
+ 'mass_airflow_gps': ('Mass airflow', 'g/s', None, 10, 0, 1000),
+})
 TIRES = tuple(name for name in CATALOG if name.startswith('tpms_'))
 PRESETS = {
     'healthy': ('Healthy baseline', None, None, None),
@@ -33,6 +46,8 @@ class Sample(BaseModel):
 
 
 def series(start: float, end: float, minutes: int, at: str, count=61):
+    if start is None or end is None:
+        return [Sample(timestamp=at, value=None)]
     anchor = datetime.fromisoformat(at)
     return [Sample(timestamp=(anchor - timedelta(minutes=minutes * (1 - i / (count - 1)))).isoformat(),
                    value=start if i == 0 else end if i == count - 1 else start + (end - start) * i / (count - 1)) for i in range(count)]
@@ -48,7 +63,7 @@ class Channel(BaseModel):
 
 def baseline(name: str, at: str):
     _, _, value, minutes, _, _ = CATALOG[name]
-    return Channel(value=value, lookback_minutes=minutes, samples=series(value, value, minutes, at))
+    return Channel(value=value, available=value is not None, lookback_minutes=minutes, samples=series(value, value, minutes, at) if value is not None else [Sample(timestamp=at, value=None)])
 
 
 class Simulation(BaseModel):
@@ -95,7 +110,7 @@ class SensorChange(BaseModel):
 
 class ReadSensors(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    sensor_names: list[str] = Field(min_length=1, max_length=8)
+    sensor_names: list[str] = Field(min_length=1, max_length=len(CATALOG))
 
 
 class ReadHistory(ReadSensors):
@@ -128,6 +143,8 @@ def change_sensor(sim: Simulation, name: str, change: SensorChange):
         raise ValueError('Enable demo sensors before changing a reading.')
     _, _, default, duration, lower, upper = CATALOG[name]
     for value in (change.value, change.start_value, change.end_value):
+        if name == 'misfire_count' and value is not None and value != int(value):
+            raise ValueError('Misfire counts must be whole numbers.')
         if value is not None and not lower <= value <= upper:
             raise ValueError(f'Demo value must be between {lower} and {upper} {CATALOG[name][1]}.')
     at = timestamp()
@@ -151,8 +168,12 @@ def change_sensor(sim: Simulation, name: str, change: SensorChange):
                     or (scenario == 'rpm_rise' and name != 'engine_rpm')):
                 raise ValueError('This preset does not match the selected sensor.')
             _, start, end, duration = PRESETS[scenario]
-        sim.channels[name] = Channel(value=end, scenario=scenario, lookback_minutes=duration,
+        sim.channels[name] = Channel(value=end, available=end is not None, scenario=scenario, lookback_minutes=duration,
                                      samples=series(start, end, duration, at, count))
+    if name == 'misfire_count':
+        for sample in sim.channels[name].samples:
+            if sample.value is not None:
+                sample.value = round(sample.value)
     sim.revision += 1
     sim.snapshot_time = at
 

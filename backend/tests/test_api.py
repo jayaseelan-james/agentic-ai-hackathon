@@ -100,7 +100,9 @@ def test_missing_credentials_never_canned_reply(setup, monkeypatch):
     post(client, id)
     message = finish(client, id)['messages'][-1]
     assert message['state'] == 'failed' and 'GEMINI_API_KEY' in message['error']
-    assert not message['text']
+    assert message['diagnostic_inference'][0]['parameter_source'] == 'synthetic_training'
+    assert message['text'] and message['follow_up_question']
+    assert not any(event['tool'] == 'gemini' and event['status'] == 'complete' for event in message['activity'])
 
 
 def test_atomic_validation_and_routes(setup, monkeypatch):

@@ -8,10 +8,16 @@ MODEL_PATH = DATA / 'bayes_model.json'
 SYMPTOMS = {
     'tire': ('yellow_tpms_warning', 'low_wheel_pressure'),
     'brake': ('soft_brake_pedal', 'persistent_red_warning'),
+    'cooling': ('high_temperature_warning', 'coolant_loss', 'overheating_stationary'),
+    'starting_charging': ('slow_cranking', 'clicking_no_crank', 'battery_warning_running'),
+    'engine_running': ('rough_idle', 'hesitation', 'check_engine_warning'),
 }
 FAULTS = {
     'tire': ('tire_pressure_loss', 'tpms_sensor_issue', 'other_or_unmodeled'),
     'brake': ('brake_hydraulic_concern', 'brake_indicator_issue', 'other_or_unmodeled'),
+    'cooling': ('coolant_loss_concern', 'coolant_circulation_problem', 'cooling_fan_control_issue', 'other_or_unmodeled'),
+    'starting_charging': ('low_battery_charge', 'starter_circuit_issue', 'charging_system_issue', 'other_or_unmodeled'),
+    'engine_running': ('ignition_misfire_concern', 'air_fuel_delivery_concern', 'engine_sensor_control_concern', 'other_or_unmodeled'),
 }
 
 

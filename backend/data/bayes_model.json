@@ -64,6 +64,249 @@
         "synthetic_agreement": 0.8965
       }
     },
+    "cooling": {
+      "class_counts": {
+        "coolant_circulation_problem": 2448,
+        "coolant_loss_concern": 3016,
+        "cooling_fan_control_issue": 1991,
+        "other_or_unmodeled": 2545
+      },
+      "datasets": {
+        "train": {
+          "count": 10000,
+          "file": "cooling_train.jsonl",
+          "seed": 44,
+          "sha256": "c1661f2708b49ff0679c7f1db84450dd8cd9e08fb8342c3a675241831aa6045f"
+        },
+        "validation": {
+          "count": 2000,
+          "file": "cooling_validation.jsonl",
+          "seed": 1044,
+          "sha256": "3324c2c5897e772328518fa003670dcd6a647f2c0353c2e8e96c3accc61796b1"
+        }
+      },
+      "likelihoods": {
+        "coolant_circulation_problem": {
+          "coolant_loss": 0.1510204081632653,
+          "high_temperature_warning": 0.8951020408163265,
+          "overheating_stationary": 0.5910204081632653
+        },
+        "coolant_loss_concern": {
+          "coolant_loss": 0.9068919814446653,
+          "high_temperature_warning": 0.8432736911862161,
+          "overheating_stationary": 0.3880053015241882
+        },
+        "cooling_fan_control_issue": {
+          "coolant_loss": 0.0863020572002007,
+          "high_temperature_warning": 0.8013045659809332,
+          "overheating_stationary": 0.8840943301555444
+        },
+        "other_or_unmodeled": {
+          "coolant_loss": 0.09972516686297606,
+          "high_temperature_warning": 0.10129564193168433,
+          "overheating_stationary": 0.1519434628975265
+        }
+      },
+      "priors": {
+        "coolant_circulation_problem": 0.24480207916833266,
+        "coolant_loss_concern": 0.30157936825269893,
+        "cooling_fan_control_issue": 0.1991203518592563,
+        "other_or_unmodeled": 0.25449820071971213
+      },
+      "symptoms": [
+        "high_temperature_warning",
+        "coolant_loss",
+        "overheating_stationary"
+      ],
+      "true_counts": {
+        "coolant_circulation_problem": {
+          "coolant_loss": 369,
+          "high_temperature_warning": 2192,
+          "overheating_stationary": 1447
+        },
+        "coolant_loss_concern": {
+          "coolant_loss": 2736,
+          "high_temperature_warning": 2544,
+          "overheating_stationary": 1170
+        },
+        "cooling_fan_control_issue": {
+          "coolant_loss": 171,
+          "high_temperature_warning": 1596,
+          "overheating_stationary": 1761
+        },
+        "other_or_unmodeled": {
+          "coolant_loss": 253,
+          "high_temperature_warning": 257,
+          "overheating_stationary": 386
+        }
+      },
+      "validation": {
+        "note": "Agreement with toy-generator labels only; not real diagnostic accuracy.",
+        "synthetic_agreement": 0.6985
+      }
+    },
+    "engine_running": {
+      "class_counts": {
+        "air_fuel_delivery_concern": 2468,
+        "engine_sensor_control_concern": 1992,
+        "ignition_misfire_concern": 3055,
+        "other_or_unmodeled": 2485
+      },
+      "datasets": {
+        "train": {
+          "count": 10000,
+          "file": "engine_running_train.jsonl",
+          "seed": 46,
+          "sha256": "059f08fb3db209062c63c02121fb4ebea71eac5b393f2c889090dad1d1ead86c"
+        },
+        "validation": {
+          "count": 2000,
+          "file": "engine_running_validation.jsonl",
+          "seed": 1046,
+          "sha256": "77bbea074a1fac506ba14a9f64cae0093d11be86f2fc4d925e838215be752200"
+        }
+      },
+      "likelihoods": {
+        "air_fuel_delivery_concern": {
+          "check_engine_warning": 0.5979757085020243,
+          "hesitation": 0.897165991902834,
+          "rough_idle": 0.5935222672064777
+        },
+        "engine_sensor_control_concern": {
+          "check_engine_warning": 0.9007021063189569,
+          "hesitation": 0.4057171514543631,
+          "rough_idle": 0.3555667001003009
+        },
+        "ignition_misfire_concern": {
+          "check_engine_warning": 0.8567222767419038,
+          "hesitation": 0.6470395812888453,
+          "rough_idle": 0.9067713444553483
+        },
+        "other_or_unmodeled": {
+          "check_engine_warning": 0.09569762766385204,
+          "hesitation": 0.15038198632891034,
+          "rough_idle": 0.09690390028146362
+        }
+      },
+      "priors": {
+        "air_fuel_delivery_concern": 0.2468012794882047,
+        "engine_sensor_control_concern": 0.1992203118752499,
+        "ignition_misfire_concern": 0.30547780887644943,
+        "other_or_unmodeled": 0.24850059976009597
+      },
+      "symptoms": [
+        "rough_idle",
+        "hesitation",
+        "check_engine_warning"
+      ],
+      "true_counts": {
+        "air_fuel_delivery_concern": {
+          "check_engine_warning": 1476,
+          "hesitation": 2215,
+          "rough_idle": 1465
+        },
+        "engine_sensor_control_concern": {
+          "check_engine_warning": 1795,
+          "hesitation": 808,
+          "rough_idle": 708
+        },
+        "ignition_misfire_concern": {
+          "check_engine_warning": 2618,
+          "hesitation": 1977,
+          "rough_idle": 2771
+        },
+        "other_or_unmodeled": {
+          "check_engine_warning": 237,
+          "hesitation": 373,
+          "rough_idle": 240
+        }
+      },
+      "validation": {
+        "note": "Agreement with toy-generator labels only; not real diagnostic accuracy.",
+        "synthetic_agreement": 0.6405
+      }
+    },
+    "starting_charging": {
+      "class_counts": {
+        "charging_system_issue": 2015,
+        "low_battery_charge": 3558,
+        "other_or_unmodeled": 2460,
+        "starter_circuit_issue": 1967
+      },
+      "datasets": {
+        "train": {
+          "count": 10000,
+          "file": "starting_charging_train.jsonl",
+          "seed": 45,
+          "sha256": "73cbc8333820938c46068d1e312d1d7db4622a4f52b9dc4770607acd999b738c"
+        },
+        "validation": {
+          "count": 2000,
+          "file": "starting_charging_validation.jsonl",
+          "seed": 1045,
+          "sha256": "ff4a0ebb3935f84f2e4db13d7350252a028ef6e4e6c6979b4f8d932fb44d90e6"
+        }
+      },
+      "likelihoods": {
+        "charging_system_issue": {
+          "battery_warning_running": 0.9058006941001487,
+          "clicking_no_crank": 0.35448686167575605,
+          "slow_cranking": 0.6053544868616758
+        },
+        "low_battery_charge": {
+          "battery_warning_running": 0.1457865168539326,
+          "clicking_no_crank": 0.6410112359550562,
+          "slow_cranking": 0.9011235955056179
+        },
+        "other_or_unmodeled": {
+          "battery_warning_running": 0.09098294069861901,
+          "clicking_no_crank": 0.09138911454102355,
+          "slow_cranking": 0.10316815597075549
+        },
+        "starter_circuit_issue": {
+          "battery_warning_running": 0.053326561706449976,
+          "clicking_no_crank": 0.9065515490096495,
+          "slow_cranking": 0.14118842051802946
+        }
+      },
+      "priors": {
+        "charging_system_issue": 0.20151939224310275,
+        "low_battery_charge": 0.3557576969212315,
+        "other_or_unmodeled": 0.2460015993602559,
+        "starter_circuit_issue": 0.19672131147540983
+      },
+      "symptoms": [
+        "slow_cranking",
+        "clicking_no_crank",
+        "battery_warning_running"
+      ],
+      "true_counts": {
+        "charging_system_issue": {
+          "battery_warning_running": 1826,
+          "clicking_no_crank": 714,
+          "slow_cranking": 1220
+        },
+        "low_battery_charge": {
+          "battery_warning_running": 518,
+          "clicking_no_crank": 2281,
+          "slow_cranking": 3207
+        },
+        "other_or_unmodeled": {
+          "battery_warning_running": 223,
+          "clicking_no_crank": 224,
+          "slow_cranking": 253
+        },
+        "starter_circuit_issue": {
+          "battery_warning_running": 104,
+          "clicking_no_crank": 1784,
+          "slow_cranking": 277
+        }
+      },
+      "validation": {
+        "note": "Agreement with toy-generator labels only; not real diagnostic accuracy.",
+        "synthetic_agreement": 0.777
+      }
+    },
     "tire": {
       "class_counts": {
         "other_or_unmodeled": 4545,
@@ -127,7 +370,7 @@
       }
     }
   },
-  "generator_version": "autosage-synthetic-v1",
-  "model_version": "autosage-trained-v1",
+  "generator_version": "autosage-synthetic-v2",
+  "model_version": "autosage-trained-v2",
   "training_source": "synthetic_only"
 }
