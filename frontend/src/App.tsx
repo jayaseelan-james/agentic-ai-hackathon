@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Car, Plus, Info, Menu, X, TriangleAlert } from 'lucide-react';
+import { Car, Plus, Menu, X, TriangleAlert } from 'lucide-react';
 import { customerError, request, vehicleName, type Health, type Incident } from './api';
 import Composer from './components/Composer';
 import MessageList from './components/MessageList';
@@ -69,8 +69,7 @@ export default function App() {
       <button className="new-chat outline" aria-label="Start new chat" onClick={() => void newChat()} disabled={submitting || loading}><Plus/>New chat</button><h2>Recent chats</h2><nav>{chats.map(chat => <button key={chat.id} disabled={submitting} className={chat.id === selected ? 'selected' : ''} onClick={() => { setSelected(chat.id); setSidebar(false); setError(''); }}>{chat.title}</button>)}</nav>
       <div className="vehicle"><Car/><div><strong>Your vehicle</strong><p>{vehicleName(current?.vehicle)}</p></div></div>
     </aside>
-    <main><div className="mobile-bar"><button aria-label="Open navigation" onClick={() => setSidebar(true)}><Menu/></button><Car/><strong>AutoSage</strong></div><header className="chat-header"><div><div className="title-row"><h1>{current?.title || 'AutoSage'}</h1></div><p>{vehicleName(current?.vehicle)}</p></div></header>
-      <div className="notice"><Info size={21}/><span>AI findings need verification. No vehicle connection.</span></div>
+    <main><div className="mobile-bar"><button aria-label="Open navigation" onClick={() => setSidebar(true)}><Menu/></button><Car/><strong>AutoSage</strong></div><header className="chat-header"><div><div className="title-row"><h1>{current?.title || 'AutoSage'}</h1></div></div></header>
 
       {current?.safety && <div className="safety" role="alert"><TriangleAlert/><div><strong>Do not continue driving</strong><p>{current.safety}</p></div></div>}
       {error && <div className="error app-error" role="alert">{error}{processingIds ? <button className="outline" onClick={() => {setError(''); setPollEpoch(v => v + 1);}}>Resume status</button> : !current && <button className="outline" onClick={() => void load()}>Retry connection</button>}</div>}

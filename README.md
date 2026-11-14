@@ -159,3 +159,5 @@ Customer answers use natural vehicle-reading terminology during the controlled d
 ### Chat activity and probability charts
 
 Chat displays the actual agent/backend execution timeline as processing is polled. Each used Bayesian domain has a horizontal probability chart when a finite distribution is returned. Domains without results show an unavailable state. Sensor channels actually read are grouped by domain with current values and returned history; there is no independent per-channel fault probability in the current model. Percentages describe synthetic-trained model estimates, not validated diagnostic confidence. Raw tool arguments and full provenance remain in the operator inspector.
+
+The chat keeps investigation extras inside one collapsed dropdown. Its header shows the animated current event during processing. Completion collapses the panel; expanding reveals high-level Bayesian probability charts first, followed by the full event history. Channel details remain in the operator inspector. Reduced-motion preferences disable the spinner animation.

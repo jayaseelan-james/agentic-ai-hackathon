@@ -362,3 +362,12 @@ def test_expanded_model_counts_and_temperature_safety():
     answer = turn(incident, 'My high temperature warning is showing.')
     assert incident.safety and answer.text == incident.safety
     assert answer.follow_up_question is None
+
+
+def test_customer_fallback_and_questions_use_plain_vehicle_language():
+    incident = demo()
+    answer = incident.messages[-1]
+    text = answer.text + (' ' + answer.follow_up_question.text if answer.follow_up_question else '')
+    assert not any(word in text.lower() for word in ('fictional', 'simulated', 'demo', 'synthetic'))
+    assert 'leading unconfirmed category' in answer.text
+    assert not any(word in ' '.join(mechanic_report(incident)['uncertainties']).lower() for word in ('fictional', 'simulated', 'demo'))

@@ -127,7 +127,10 @@ def ingest_user(incident, user):
             set_context(incident, 'demo')
             state.active = bool(state.domains)
         elif pending and pending.kind == 'context':
-            if text.strip(' .!') in ('real', 'my car'):
+            if short_answer(text) is not None:
+                set_context(incident, 'demo' if short_answer(text) and incident.sensor_simulation.enabled else 'real')
+                state.active = bool(state.domains)
+            elif text.strip(' .!') in ('real', 'my car'):
                 set_context(incident, 'real')
                 state.active = bool(state.domains)
         elif state.context == 'unspecified' and not incident.sensor_simulation.enabled:
@@ -315,7 +318,7 @@ def next_question(incident, results):
     if state.context == 'unspecified':
         if state.asked.get('context') == 'declined':
             return None
-        return Question(id='context', kind='context', text='Is this investigation about the fictional demo vehicle or your real vehicle?')
+        return Question(id='context', kind='context', text='Should I use the available sensor readings for this investigation?')
     for result in results:
         for symptom in result.conflicts:
             signature = 'conflict:' + symptom + ':' + ','.join(e.id for e in result.evidence_used if e.symptom == symptom)
@@ -352,8 +355,8 @@ def next_question(incident, results):
     # Stable iteration order breaks equal-gain ties.
     gain, domain, symptom = max(choices, key=lambda item: item[0])
     if symptom == 'low_wheel_pressure' and state.context == 'demo' and incident.sensor_simulation.enabled:
-        for condition, question in [('parked', 'Were these demo readings recorded while the fictional vehicle was parked?'),
-                                    ('cold', 'Were the fictional demo tires cold when these readings were recorded?')]:
+        for condition, question in [('parked', 'Was the vehicle parked when these readings were recorded?'),
+                                    ('cold', 'Were the tires cold when these readings were recorded?')]:
             if getattr(state, condition) is None and condition not in state.asked:
                 return Question(id=condition, kind='conditions', domain='tire', text=question, information_gain=gain)
         if state.parked is not True or state.cold is not True:
@@ -361,8 +364,6 @@ def next_question(incident, results):
         # Valid readings must actually be executed through sensor tools, not inferred from presets.
         return None
     text = QUESTIONS[symptom]
-    if state.context == 'demo':
-        text = 'For the fictional demo vehicle: ' + text[0].lower() + text[1:]
     return Question(id=symptom, domain=domain, symptom=symptom, text=text, information_gain=gain)
 
 
@@ -388,7 +389,7 @@ def complete_sensor_evidence(incident, answer):
     arguments = {'sensor_names': ['tpms_per_wheel_pressure_bar']}
     result = read(sim, ReadSensors(**arguments))
     event = Event(tool='read_vehicle_sensors', initiator='backend', arguments=arguments, result=result,
-                  summary='Backend workflow read current simulated tires for Bayesian evidence')
+                  summary='Read current tire pressures for Bayesian evidence')
     answer.activity.append(event)
     record_sensor_result(incident, result, event.id)
 
@@ -411,16 +412,16 @@ def finish(incident, answer, preserve_generated=False):
     if preserve_generated and answer.text and not incident.safety:
         finalize_dialogue(incident, answer, question)
         return True
-    prefix = 'For the fictional demo vehicle, ' if state.context == 'demo' else ''
+    prefix = ''
     if incident.safety:
         answer.text = SAFETY
     elif question:
         if question.kind == 'conflict':
             answer.text = prefix + 'I need to clarify the conflicting observations before narrowing the issue.'
         elif question.kind == 'context':
-            answer.text = 'The simulated readings cannot establish what is happening with your real vehicle.'
+            answer.text = 'I need to confirm which readings apply to this vehicle before drawing a conclusion.'
         elif question.kind == 'conditions':
-            answer.text = 'The synthetic handbook reference applies only to cold, parked demo conditions.'
+            answer.text = 'The pressure comparison requires readings taken with cold tires while parked.'
         else:
             facts = []
             for result in results:
@@ -428,7 +429,7 @@ def finish(incident, answer, preserve_generated=False):
                 if observations.get('yellow_tpms_warning') is True:
                     facts.append('A yellow tire-pressure warning is reported.')
                 if observations.get('low_wheel_pressure') is True:
-                    facts.append('A below-reference tire reading is observed' + (' in simulated data.' if state.context == 'demo' else ' in your report.'))
+                    facts.append('A below-reference tire reading is observed' + ' in the available readings.')
             statement = prefix + (' '.join(facts) if facts else 'The available observations do not yet distinguish the fault category.')
             answer.text = statement[0].upper() + statement[1:]
     elif any(r.status == 'model_error' for r in results):
@@ -438,9 +439,9 @@ def finish(incident, answer, preserve_generated=False):
         for result in results:
             if result.status == 'ok':
                 cause = LABELS[result.ranked_hypotheses[0].fault_id]
-                clues = ', '.join(e.symptom.replace('_', ' ') + (' reported' if e.source == 'user_reported' else ' simulated')
+                clues = ', '.join(e.symptom.replace('_', ' ') + (' reported' if e.source == 'user_reported' else ' observed')
                                   for e in result.evidence_used if e.value is True)
-                sentence = f'{prefix}the observations support {cause} as the leading unconfirmed category in this synthetic model' + (f' ({clues}).' if clues else '.')
+                sentence = f'{prefix}the observations support {cause} as the leading unconfirmed category' + (f' ({clues}).' if clues else '.')
                 conclusions.append(sentence[0].upper() + sentence[1:])
             else:
                 conclusions.append(f'The {result.domain} evidence is inconclusive; this limited model cannot identify a supported cause.')

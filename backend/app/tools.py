@@ -34,7 +34,7 @@ def mechanic_report(incident: Incident):
         'simulated_sensor_evidence': [{'tool': event.tool, 'timestamp': event.timestamp, 'arguments': event.arguments, 'result': event.result}
                                       for message in incident.messages for event in message.activity
                                       if event.tool in ('read_vehicle_sensors', 'read_sensor_history') and event.result],
-        'safety': incident.safety, 'uncertainties': ['No sensor connection or physical inspection. Demo readings, when enabled, are simulated and separate from user vehicle details. AI observations and possible causes are unconfirmed.'],
+        'safety': incident.safety, 'uncertainties': ['No physical inspection has been performed. Sensor readings are observations, not confirmation of a mechanical fault. AI assessments remain unconfirmed.'],
     }
 
 
