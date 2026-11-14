@@ -1,4 +1,5 @@
 import {useEffect, useRef} from 'react';
+import {ExternalLink} from 'lucide-react';
 import type {DiagnosticInference, Message} from '../api';
 
 const DOMAINS:Record<string,string>={tire:'Tires',brake:'Brakes',cooling:'Cooling',starting_charging:'Starting and charging',engine_running:'Engine running'};
@@ -16,7 +17,7 @@ export default function InvestigationDetails({message}:{message:Message}) {
  for(const e of message.activity){if(e.tool==='classify_diagnosis'&&e.status==='complete'&&e.result&&typeof e.result.domain==='string'&&Array.isArray(e.result.ranked_hypotheses))results.set(e.result.domain,e.result as unknown as DiagnosticInference);}
  for(const result of message.diagnostic_inference||[])results.set(result.domain,result);
  const domains=[...results.keys()];
- if(!running&&!message.activity.length&&!domains.length)return null;
+ if(!running&&!message.activity.length&&!domains.length&&!message.citations.length&&!message.search_suggestions.length)return null;
  return <details ref={dropdown} className="activity investigation-dropdown"><summary><span className={running?'current-event processing':'details-label'}>{running&&<span className="event-spinner" aria-hidden="true"/>}{current?currentLabel:running?'Reviewing the evidence':message.state==='failed'?'Investigation details · Needs retry':'Investigation details'}</span><span className="details-count">{message.activity.length} events</span><span className="details-chevron" aria-hidden="true">⌄</span></summary><div className="investigation-dropdown-body">
   {!!domains.length&&<section className="bayesian-results" aria-label="Bayesian probabilities"><h3>Bayesian probabilities</h3><p className="probability-note">Model estimates, not validated diagnostic confidence.</p>
    {domains.map(domain=>{const result=results.get(domain);const ranked=(result?.ranked_hypotheses||[]).filter(h=>Number.isFinite(h.posterior)&&h.posterior>=0&&h.posterior<=1);return <section className="probability-domain" key={domain} aria-label={`${DOMAINS[domain]||label(domain)} probabilities`}><h4>{DOMAINS[domain]||label(domain)}</h4>{result&&<p className="inference-status">{label(result.status)}{result.conflicts?.length?' · Conflicting observations':''}</p>}
@@ -24,5 +25,7 @@ export default function InvestigationDetails({message}:{message:Message}) {
    </section>;})}
   </section>}
   {!!message.activity.length&&<section className="investigation-activity" aria-label="Investigation events"><h3>Events</h3><ol>{message.activity.map(e=><li key={e.id} className={`event-${e.status}`}><div><strong>{TOOLS[e.tool]||label(e.tool)}</strong><span className="event-status">{status(e.status)}</span></div><p>{e.summary}</p><small>{new Date(e.timestamp).toLocaleTimeString()} · {e.initiator==='model'?'Agent':'Backend'}</small></li>)}</ol></section>}
+      {message.citations.length > 0 && <div className="sources"><strong>Sources</strong>{[...new Map(message.citations.map(source => [source.url, source])).values()].map((source, i) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{i + 1}. {source.title}<ExternalLink size={13}/></a>)}</div>}
+      {message.search_suggestions.map((html, i) => <iframe key={i} className="search-suggestions" title={`Google Search suggestions ${i + 1}`} sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer" srcDoc={`<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https:; img-src https: data:; font-src https:"><base target="_blank">${html}`}/>)}
  </div></details>;
 }

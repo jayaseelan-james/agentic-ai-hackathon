@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Car, ExternalLink } from 'lucide-react';
+import { Car } from 'lucide-react';
 import Markdown from 'react-markdown';
 import InvestigationDetails from './InvestigationDetails';
 import {customerError, type Message, type MechanicReport} from '../api';
@@ -39,8 +39,6 @@ export default function MessageList({messages, onRetry, busy}: {messages: Messag
         {message.role === 'assistant' && message.provider === 'safety_rules' && message.state !== 'processing' && <small>Professional assistance recommended</small>}
       </div>
       {message.role === 'assistant' && <InvestigationDetails message={message}/>}
-      {message.citations.length > 0 && <div className="sources"><strong>Sources</strong>{[...new Map(message.citations.map(source => [source.url, source])).values()].map((source, i) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{i + 1}. {source.title}<ExternalLink size={13}/></a>)}</div>}
-      {message.search_suggestions.map((html, i) => <iframe key={i} className="search-suggestions" title={`Google Search suggestions ${i + 1}`} sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer" srcDoc={`<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https:; img-src https: data:; font-src https:"><base target="_blank">${html}`}/>)}
       {message.report && <Report report={message.report}/>}</div>
     </article>)}<div ref={end}/>
   </div>;
