@@ -298,6 +298,10 @@ DEMO_DATA_ONLY=true
 
 ### 6.2 Bayesian network: symptoms to possible diagnosis
 
+**Implemented refinement (14 November 2026):** The user selected explicit synthetic-data training and guided questions instead of listing hypotheses in chat. `python -m backend.train_bayes` generates 10,000 training and 2,000 separate validation examples per domain from the tables below, then fits priors/CPTs with Laplace smoothing (alpha=1). `backend/data/bayes_model.json` stores learned parameters, counts, fixed seeds, dataset hashes and model/generator versions. Runtime uses the fitted artifact, never trains or substitutes the generator CPTs. The worked percentages below describe the generator; fitted results differ slightly and tests check arithmetic against fitted parameters plus tolerance to the generator example. Synthetic validation does not establish real diagnostic accuracy.
+
+The backend uses accepted evidence to select one safe follow-up by expected information gain above 0.01 bits, prioritizes conflicts, and continues while useful questions remain. Ordinary chat shows a qualified leading category only after questioning ends, or an inconclusive result. Full rankings appear in expandable details/activity and handoffs. Unknowns are marginalized; media interpretations need explicit user confirmation. A minimal synthetic handbook supplies the fictional pressure reference only for confirmed cold/parked demo conditions; full manual search remains separate. Model-requested and backend-ensured classification are disclosed. Real and fictional evidence are isolated, and sensor revisions invalidate current findings without rewriting message history. Safety remains independent and immediate.
+
 **Purpose:** Classify plausible fault categories from structured evidence in both online and offline modes. The Bayesian engine supplies numbers; Gemini/Gemma explains those numbers without inventing or changing them. This is an automotive hypothesis ranking, not a confirmed diagnosis.
 
 Use two small domain networks initially. Each has a categorical dominant-fault node pointing to two binary symptom nodes: a deliberately simple **naive Bayes Bayesian network**. Domains are evaluated independently, so a vehicle can have a tire problem and a brake problem at the same time. Within a domain, the single-dominant-fault assumption is a demo simplification; concurrent faults within that domain are not modeled.
@@ -433,7 +437,9 @@ Return `matches` with: `document_id`, `title`, `section`, `page` if known, `exce
 
 Deterministic code (NOT an LLM-only tool). Return: `severity`, `drive_safety`, `triggered_rules`, `mandatory_message`, `prohibited_actions`. Backend executes this before either provider's guidance is displayed.
 
-### `classify_diagnosis(incident_id, domain, evidence_ids)`
+### `classify_diagnosis(domain)`
+
+**Current interface:** the tool accepts only `domain` (`tire` or `brake`). The backend binds incident/evidence from the active chat rather than accepting model-selected incident or evidence IDs. Extra arguments, model-supplied likelihoods and probabilities are rejected. Messages expose additive `diagnostic_inference` and `follow_up_question` fields; reports include current results, historical snapshots, provenance and unresolved questions. The detailed request below is the original specification; its explicit incident/evidence arguments are superseded by this server-bound interface.
 
 Local deterministic Bayesian inference, available in every provider mode. Read the graph/priors/CPTs from `bayes_model.json` using §6.2. `domain` is `tire` or `brake`; validate requested evidence IDs belong to the current incident and revision. The backend resolves symptoms from accepted evidence; models cannot submit arbitrary likelihoods, priors, fault labels, fixture IDs or fabricated measurements. An optional model-requested call and the mandatory final classification reuse the same cached result when evidence has not changed.
 
@@ -788,11 +794,11 @@ Maintain a separate synthetic handbook section for brake warnings with stop-driv
 - [ ] `test_no_codes_is_not_safe`: Empty DTCs do not imply roadworthiness.
 - [ ] `test_image_upload_used`: Image content reaches Gemini when photo is attached.
 - [ ] `test_mechanic_report_provenance`: Report distinguishes user claims, simulated readings, and model hypotheses.
-- [ ] `test_bayes_worked_example`: Tire posterior matches §6.2 within tolerance and sums to one; validate priors, graph and CPT ranges/normalization.
-- [ ] `test_bayes_unknown_and_conflicts`: Unknown is marginalized; no evidence abstains; duplicates are not counted twice; contradictory evidence is flagged.
-- [ ] `test_bayes_domain_limits`: Unsupported domains and inconclusive rankings do not become confirmed diagnoses; separate domain probabilities are not merged.
-- [ ] `test_bayes_provenance_boundary`: Real-vehicle incidents reject fixture evidence; missing manual/conditions cannot produce a low-pressure symptom.
-- [ ] `test_bayes_cannot_weaken_safety`: Critical symptom escalation persists for every posterior, provider failure and inference error.
+- [x] Bayesian worked example: `backend/tests/test_bayes.py` checks fitted-parameter arithmetic, generator-example tolerance, normalization, graph/CPT validation and reproducible training.
+- [x] Bayesian unknowns and conflicts: unknown is marginalized; no evidence abstains; duplicates count once; contradictions require clarification.
+- [x] Bayesian domain limits: unsupported domains and inconclusive rankings do not become confirmed diagnoses; domains remain independent.
+- [x] Bayesian provenance: real/demo contexts are isolated; missing handbook/conditions cannot produce sensor-derived low-pressure evidence; historical snapshots remain immutable.
+- [x] Bayesian safety: critical escalation persists for model errors/provider failures and does not depend on posteriors.
 - [ ] `test_offline_blocks_external_calls`: Forced offline bypasses all external clients; local frontend loads without CDNs, cloud fonts, remote manuals or speech APIs.
 - [ ] `test_auto_failover_preserves_incident`: Inject Gemini failure mid-loop; local provider resumes with accepted evidence and no duplicate tool/report events.
 - [ ] `test_gemma_invalid_tool_json`: Unknown tools/arguments are rejected; one repair then disclosed backend workflow; never execute generated code.
@@ -890,7 +896,29 @@ Maintain a separate synthetic handbook section for brake warnings with stop-driv
 - [ ] Local Gemma model/runtime downloaded, pinned and smoke-tested
 - [ ] Synthetic graph/CPTs and fixed tool fixtures validated
 - [ ] Provider switching and rules-only degraded mode verified
+- [x] Synthetic-trained Bayesian guided conversations — local artifact, validated evidence, information-gain questions, chat/report integration; backend and injected-provider desktop/mobile checks pass. This does not complete the separate Gemma/offline milestones.
 
-**Known limitations:** This document specifies the design; the application, local Gemma adapter, Bayesian engine and tool fixtures are not yet implemented. No laptop latency/memory measurements or diagnostic-accuracy claims have been established. Update this section as features are completed.
+**Implemented:** Gemini multimodal chat, simulated current/history sensor tools, safety checks, tool activity and handoffs; synthetic-data-trained Bayesian tire/brake ranking with evidence provenance and one-question conversational guidance. Training is explicit and reproducible; numeric details are expandable, not a competing-causes list in ordinary chat. The local handbook is only a synthetic pressure reference, not full manual retrieval.
+
+**Known limitations:** Local Gemma and the disconnected full-app rehearsal remain incomplete. Text evidence uses conservative English patterns; uncertain/media symptoms need clarification. Synthetic data/validation do not establish diagnostic accuracy or calibration. No real vehicle sensors, persistent database, or production deployment are included. See README for current commands and limitations.
 
 **End of project plan.**
+
+
+### Approved synthetic domain expansion
+
+The v2 model contains 18 categories across five independent domains. In addition to tire and brake:
+
+| Domain | Categories | Observations |
+|---|---|---|
+| Cooling | Coolant loss; circulation problem; fan/control issue; other/unmodeled | High-temperature warning; coolant loss; overheating while stationary |
+| Starting and charging | Low battery charge; starter circuit issue; charging system issue; other/unmodeled | Slow cranking; clicking without cranking; battery warning while running |
+| Engine running | Ignition/misfire concern; air/fuel delivery concern; sensor/control concern; other/unmodeled | Rough idle; hesitation; check-engine warning |
+
+Each domain has 10,000 training and 2,000 separate validation examples. The new probabilities in `backend/train_bayes.py` are hand-authored synthetic assumptions, not automotive statistics. Runtime uses `autosage-trained-v2`; reproduce with `python -m backend.train_bayes`. New-domain evidence initially comes from explicit English user reports, not invented sensor measurements. Unknowns, conflicts, provenance and one-question information-gain selection remain shared. High-temperature and stationary-overheating reports stop questioning and escalate, including short answers to pending questions. Synthetic validation does not establish real diagnostic accuracy.
+
+## Integrated local implementation status
+
+Implemented: FastAPI/React customer chat; actual Gemini multimodal media analysis; Search and URL context; validated observation registration; five-domain synthetic Bayesian inference; shared 17-channel simulator with scenarios/history/trends, revision checks and per-investigation frozen snapshots; operator inspection at `/simulator`; one focused follow-up; persistent deterministic safety; processing/retry and grounded citations. Operator details are separated from customer chat.
+
+Validation covers injected providers and real Gemini media/search calls. Synthetic training and simulated values do not establish real diagnostic accuracy. Hardware, persistent storage, multiworker coordination, authentication and offline Gemma remain deferred. Current setup/API contracts are documented in README.md.

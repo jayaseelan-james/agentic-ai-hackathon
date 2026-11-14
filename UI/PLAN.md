@@ -60,3 +60,9 @@ The implementation uses the desktop palette consistently on mobile. Initial demo
 The current application supersedes the mock API behavior described above with real Gemini investigations. See [README.md](../README.md) for setup, contracts and limitations. The approved layout and capture controls remain; live provider status, confirmed vehicle details, grounded citations, actual tool events and retryable background processing replace demo content. There are no seeded conversations or production canned-reply fallbacks.
 
 The selected default is `gemini-4-carbon`, following the user's request for the best available reasoning model; `GEMINI_MODEL` remains configurable. The root `.env` holds the backend-only AI Studio key. Google Search and URL context provide external evidence; vehicle-profile and mechanic-report functions run locally with validated arguments. Sensor calls, synthetic telemetry, Bayesian rankings and offline Gemma remain deferred.
+
+## Integrated implementation (supersedes earlier deferrals)
+
+Customer chat is `/`; operator simulation is `/simulator` in a separate tab. All 17 numeric channels are grouped in five domains with scenario buttons, inline edits, availability controls, history charts, custom trends and revision-aware writes. One shared simulator feeds frozen per-investigation snapshots; edits affect subsequent messages across chats.
+
+Gemini integrates text/image/audio/video, validated source-linked observations, all five Bayesian domains, enabled current/history sensors, Search and URL context. Customer responses preserve grounded explanation and ask one focused question. Technical evidence, tool events, provider state and synthetic probabilities live in the operator inspector. Safety escalation overrides questioning. No real hardware, durable storage, authentication or offline Gemma is included.
