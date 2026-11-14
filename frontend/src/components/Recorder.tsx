@@ -70,7 +70,8 @@ export default function Recorder({ kind, onClose, onAttach }: {kind: 'audio' | '
     <p className="record-help">Only record while safely parked.</p>
     {state === 'error' ? <p role="alert" className="error">{error}</p> : <>
       <div className={`record-preview ${kind}`}>
-        {kind === 'video' ? (state === 'review' ? <video src={url} controls playsInline/> : <video ref={video} autoPlay muted playsInline/>) : (state === 'review' ? <audio src={url} controls/> : <Mic size={56}/>)}
+        {/* Separate elements prevent the stopped camera srcObject from overriding the recorded Blob URL. */}
+        {kind === 'video' ? (state === 'review' ? <video key="recorded-preview" src={url} controls playsInline preload="metadata" aria-label="Recorded video preview"/> : <video key="live-camera" ref={video} autoPlay muted playsInline aria-label="Live camera preview"/>) : (state === 'review' ? <audio src={url} controls/> : <Mic size={56}/>)}
         {state === 'recording' && <span className="timer"><i/>{formatTime(seconds)}</span>}
         {state === 'loading' && <span className="device-loading">Opening {kind === 'audio' ? 'microphone' : 'camera'}…</span>}
       </div>
