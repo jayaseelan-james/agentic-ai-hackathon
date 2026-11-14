@@ -42,7 +42,8 @@ def test_global_catalog_revision_conflicts_and_all_channels(client):
     state=client.get('/api/simulator').json()
     assert len(state['channels'])==17
     assert set(sum(state['groups'].values(),[]))==set(CATALOG)
-    assert sum(c['available'] for c in state['channels'].values())==6
+    assert sum(c['available'] for c in state['channels'].values())==17
+    assert all(c['value'] is not None for c in state['channels'].values())
     assert client.patch('/api/simulator',json={'enabled':True}).status_code==428
     assert client.patch('/api/simulator?required=false',json={'enabled':True}).status_code==428
     assert client.patch('/api/simulator',json={'enabled':True},headers={'If-Match':'0'}).status_code==200
@@ -53,6 +54,8 @@ def test_global_catalog_revision_conflicts_and_all_channels(client):
         assert result.status_code==200
         assert result.json()['channels'][name]['value']==value
     assert len(read(main.shared_simulation,ReadSensors(sensor_names=list(CATALOG)))['readings'])==17
+    reset=client.post('/api/simulator/reset',headers=headers(client)).json()
+    assert all(c['available'] and c['value'] is not None for c in reset['channels'].values())
     for name in CATALOG:
         result=client.patch(f'/api/simulator/sensors/{name}',json={'kind':'unavailable'},headers=headers(client))
         assert result.status_code==200 and result.json()['channels'][name]['value'] is None

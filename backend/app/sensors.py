@@ -18,17 +18,17 @@ CATALOG = {
     'coolant_temp_c': ('Coolant temperature', '°C', 22, 10, -50, 200),
 }
 CATALOG.update({
- 'brake_fluid_pct': ('Brake-fluid level', '%', None, 1440, 0, 100),
- 'brake_pressure_bar': ('Brake pressure', 'bar', None, 10, 0, 300),
- 'coolant_level_pct': ('Coolant level', '%', None, 1440, 0, 100),
- 'fan_rpm': ('Cooling fan RPM', 'RPM', None, 10, 0, 20000),
- 'vehicle_speed_kmh': ('Vehicle speed', 'km/h', None, 10, 0, 300),
- 'battery_voltage_v': ('Battery voltage', 'V', None, 1440, 0, 30),
- 'cranking_rpm': ('Cranking RPM', 'RPM', None, 2, 0, 3000),
- 'starter_current_a': ('Starter current', 'A', None, 2, 0, 2000),
- 'misfire_count': ('Misfires in 60 seconds', 'count', None, 2, 0, 100000),
- 'fuel_pressure_kpa': ('Fuel pressure', 'kPa', None, 10, 0, 30000),
- 'mass_airflow_gps': ('Mass airflow', 'g/s', None, 10, 0, 1000),
+ 'brake_fluid_pct': ('Brake-fluid level', '%', 75, 1440, 0, 100),
+ 'brake_pressure_bar': ('Brake pressure', 'bar', 0, 10, 0, 300),
+ 'coolant_level_pct': ('Coolant level', '%', 80, 1440, 0, 100),
+ 'fan_rpm': ('Cooling fan RPM', 'RPM', 0, 10, 0, 20000),
+ 'vehicle_speed_kmh': ('Vehicle speed', 'km/h', 0, 10, 0, 300),
+ 'battery_voltage_v': ('Battery voltage', 'V', 12.6, 1440, 0, 30),
+ 'cranking_rpm': ('Cranking RPM', 'RPM', 0, 2, 0, 3000),
+ 'starter_current_a': ('Starter current', 'A', 0, 2, 0, 2000),
+ 'misfire_count': ('Misfires in 60 seconds', 'count', 0, 2, 0, 100000),
+ 'fuel_pressure_kpa': ('Fuel pressure', 'kPa', 0, 10, 0, 30000),
+ 'mass_airflow_gps': ('Mass airflow', 'g/s', 0, 10, 0, 1000),
 })
 TIRES = tuple(name for name in CATALOG if name.startswith('tpms_'))
 PRESETS = {
