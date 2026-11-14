@@ -1,0 +1,10 @@
+{
+  "document_id": "DEMO_HANDBOOK_V1",
+  "title": "Synthetic Demo Sedan Handbook",
+  "section": "DEMO-TPMS-01",
+  "source_type": "synthetic_demo_handbook",
+  "fixture_id": "demo-sensors-v1",
+  "conditions": {"parked": true, "tires_cold": true},
+  "pressure_reference": {"value": 2.3, "unit": "bar"},
+  "excerpt": "For this fictional cold, parked demo vehicle only, the reference pressure is 2.3 bar at each wheel. A lower reading supports a low-pressure observation; it does not identify the cause. For a real vehicle use its pressure label/manual and assess tire condition."
+}

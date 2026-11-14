@@ -1,0 +1,133 @@
+{
+  "alpha": 1,
+  "calibration": "not_validated",
+  "domains": {
+    "brake": {
+      "class_counts": {
+        "brake_hydraulic_concern": 1534,
+        "brake_indicator_issue": 2536,
+        "other_or_unmodeled": 5930
+      },
+      "datasets": {
+        "train": {
+          "count": 10000,
+          "file": "brake_train.jsonl",
+          "seed": 43,
+          "sha256": "532cb3e08bd81539175cd7aa45877749aad2d029bc7e425819d551833a84e76d"
+        },
+        "validation": {
+          "count": 2000,
+          "file": "brake_validation.jsonl",
+          "seed": 1043,
+          "sha256": "1ae6e7798d9acf18a6ef4bb5cf98940055dbb16615ca2001143c35dba26137e1"
+        }
+      },
+      "likelihoods": {
+        "brake_hydraulic_concern": {
+          "persistent_red_warning": 0.853515625,
+          "soft_brake_pedal": 0.8815104166666666
+        },
+        "brake_indicator_issue": {
+          "persistent_red_warning": 0.9014972419227738,
+          "soft_brake_pedal": 0.0760441292356186
+        },
+        "other_or_unmodeled": {
+          "persistent_red_warning": 0.0473701955495617,
+          "soft_brake_pedal": 0.023600809170600135
+        }
+      },
+      "priors": {
+        "brake_hydraulic_concern": 0.15345396381085674,
+        "brake_indicator_issue": 0.25362391282615215,
+        "other_or_unmodeled": 0.5929221233629911
+      },
+      "symptoms": [
+        "soft_brake_pedal",
+        "persistent_red_warning"
+      ],
+      "true_counts": {
+        "brake_hydraulic_concern": {
+          "persistent_red_warning": 1310,
+          "soft_brake_pedal": 1353
+        },
+        "brake_indicator_issue": {
+          "persistent_red_warning": 2287,
+          "soft_brake_pedal": 192
+        },
+        "other_or_unmodeled": {
+          "persistent_red_warning": 280,
+          "soft_brake_pedal": 139
+        }
+      },
+      "validation": {
+        "note": "Agreement with toy-generator labels only; not real diagnostic accuracy.",
+        "synthetic_agreement": 0.8965
+      }
+    },
+    "tire": {
+      "class_counts": {
+        "other_or_unmodeled": 4545,
+        "tire_pressure_loss": 3456,
+        "tpms_sensor_issue": 1999
+      },
+      "datasets": {
+        "train": {
+          "count": 10000,
+          "file": "tire_train.jsonl",
+          "seed": 42,
+          "sha256": "f38b58e13f8339049dc4854cd6deb39028c15436b73f0c28fb5d7607b0706148"
+        },
+        "validation": {
+          "count": 2000,
+          "file": "tire_validation.jsonl",
+          "seed": 1042,
+          "sha256": "0ef2cbe8b4d5344043460a9b096d27eb7767df92e9adf3a8b2bff9806f91d9ab"
+        }
+      },
+      "likelihoods": {
+        "other_or_unmodeled": {
+          "low_wheel_pressure": 0.20694963712337805,
+          "yellow_tpms_warning": 0.10974268748625467
+        },
+        "tire_pressure_loss": {
+          "low_wheel_pressure": 0.8131868131868132,
+          "yellow_tpms_warning": 0.9037015615962984
+        },
+        "tpms_sensor_issue": {
+          "low_wheel_pressure": 0.15292353823088456,
+          "yellow_tpms_warning": 0.7986006996501749
+        }
+      },
+      "priors": {
+        "other_or_unmodeled": 0.45446366090172946,
+        "tire_pressure_loss": 0.3455963211036689,
+        "tpms_sensor_issue": 0.19994001799460162
+      },
+      "symptoms": [
+        "yellow_tpms_warning",
+        "low_wheel_pressure"
+      ],
+      "true_counts": {
+        "other_or_unmodeled": {
+          "low_wheel_pressure": 940,
+          "yellow_tpms_warning": 498
+        },
+        "tire_pressure_loss": {
+          "low_wheel_pressure": 2811,
+          "yellow_tpms_warning": 3124
+        },
+        "tpms_sensor_issue": {
+          "low_wheel_pressure": 305,
+          "yellow_tpms_warning": 1597
+        }
+      },
+      "validation": {
+        "note": "Agreement with toy-generator labels only; not real diagnostic accuracy.",
+        "synthetic_agreement": 0.7945
+      }
+    }
+  },
+  "generator_version": "autosage-synthetic-v1",
+  "model_version": "autosage-trained-v1",
+  "training_source": "synthetic_only"
+}

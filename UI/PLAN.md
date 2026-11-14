@@ -54,3 +54,9 @@ This plan records the explicitly selected chat UI and mock API phase. The broade
 The mock UI phase is now implemented in `../frontend` and `../backend`. See [local setup and limitations](../README.md). The production frontend build, seven backend tests, and three Chromium end-to-end scenarios pass, including synthetic-device audio/video recording and playback. Real physical-device and cross-browser testing remain manual checks.
 
 The implementation uses the desktop palette consistently on mobile. Initial demo chats contain text only; real attachments render after upload. A fifth attachment menu action, Upload audio, makes file upload available when microphone permission is denied. Recording previews show the actual camera stream rather than the illustrative wheel photo in the mockup.
+
+## Live Gemini Phase
+
+The current application supersedes the mock API behavior described above with real Gemini investigations. See [README.md](../README.md) for setup, contracts and limitations. The approved layout and capture controls remain; live provider status, confirmed vehicle details, grounded citations, actual tool events and retryable background processing replace demo content. There are no seeded conversations or production canned-reply fallbacks.
+
+The selected default is `gemini-4-carbon`, following the user's request for the best available reasoning model; `GEMINI_MODEL` remains configurable. The root `.env` holds the backend-only AI Studio key. Google Search and URL context provide external evidence; vehicle-profile and mechanic-report functions run locally with validated arguments. Sensor calls, synthetic telemetry, Bayesian rankings and offline Gemma remain deferred.
